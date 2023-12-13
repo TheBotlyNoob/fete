@@ -75,7 +75,20 @@ pub enum AddressingMode {
     /// STA (DST),Y     ;Store accumulator indirectly into memory
     /// ```
     IndirectY,
+    /// Relative addressing mode is used by branch instructions (e.g. BEQ, BNE, etc.) which contain a signed 8 bit relative offset (e.g. -128 to +127) which is added to program counter if the condition is true.
+    /// As the program counter itself is incremented during instruction execution by two the effective address range for the target instruction must be with -126 to +129 bytes of the branch.
+    /// ```x86asm
+    /// BEQ LABEL       ;Branch if zero flag set to LABEL
+    /// BNE *+4         ;Skip over the following 2 byte instruction
+    /// ```
+    Relative,
     /// For many 6502 instructions the source and destination of the information to be manipulated is implied directly by the function of the instruction itself and no further operand needs to be specified. Operations like 'Clear Carry Flag' (CLC) and 'Return from Subroutine' (RTS) are implicit.
+    ///
+    /// Additionally, some instructions have an option to operate directly upon the accumulator. The programmer specifies this by using a special operand value, 'A'. For example:
+    /// ```x86asm
+    /// LSR A           ;Logical shift right one bit
+    /// ROR A           ;Rotate right one bit
+    /// ```
     NoneAddressing,
 }
 
@@ -168,6 +181,10 @@ impl Cpu {
             AddressingMode::IndirectY => {
                 let real_addr = u16::from(self.take());
                 self.mem_read_u16(real_addr) + u16::from(self.reg_y)
+            }
+            AddressingMode::Relative => {
+                let offset = self.take(); // self.pc + 1
+                self.pc.wrapping_add(offset as u16)
             }
             AddressingMode::NoneAddressing => {
                 log::warn!("AddressingMode::NoneAddressing is not a valid addressing mode");

@@ -411,6 +411,83 @@ pub fn and(cpu: &mut Cpu, mode: AddressingMode) {
     cpu.set_reg_a(cpu.reg_a & val);
 }
 
+/// Shifts the bits of the accumulator or the value at the given address left by one, and sets the zero, negative, and carry flags.
+/// The bit that is shifted out is stored in the carry flag.
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::{cpu::Status, Cpu};
+///
+/// let mut cpu = Cpu::new();
+///
+/// // LDA #$05
+/// // ASL A
+/// // BRK
+/// cpu.load_and_run(&[0xA9, 0x05, 0x0A, 0x00]);
+///
+/// assert_eq!(cpu.reg_a, 0x05 << 1);
+/// assert_eq!(cpu.status, Status::BREAK);
+/// ```
+pub fn asl(cpu: &mut Cpu, mode: AddressingMode) {
+    let accum = mode == AddressingMode::NoneAddressing;
+    let (addr, val) = if accum {
+        (0x0000, cpu.reg_a)
+    } else {
+        let addr = cpu.get_op_addr(mode);
+        (addr, cpu.mem_read(addr))
+    };
+
+    let new_val = val << 1;
+    cpu.status.set(Status::CARRY, val & 0x80 != 0);
+    if accum {
+        cpu.set_reg_a(new_val);
+    } else {
+        cpu.mem_write(addr, new_val);
+    }
+}
+
+/// Branches to the given address if the carry flag is clear.
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::Cpu;
+///
+/// let mut cpu = Cpu::new();
+///
+/// // BCC *+2
+/// // BRK
+/// cpu.load_and_run(&[0x90, 0x02, 0x00]);
+///
+/// assert_eq!(cpu.pc, 0x8003);
+/// ```
+pub fn bcc(cpu: &mut Cpu, mode: AddressingMode) {
+    let addr = cpu.get_op_addr(mode); // this HAS to be here, otherwise the pc will not be incremented correctly
+    if !cpu.status.contains(Status::CARRY) {
+        cpu.pc = addr;
+    }
+}
+
+/// Sets the carry flag.
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::{cpu::Status, Cpu};
+///
+/// let mut cpu = Cpu::new();
+///
+/// // SEC
+/// // BRK
+/// cpu.load_and_run(&[0x38, 0x00]);
+///
+/// assert_eq!(cpu.status, Status::CARRY | Status::BREAK);
+/// ```
+pub fn sec(cpu: &mut Cpu, _mode: AddressingMode) {
+    cpu.status |= Status::CARRY;
+}
+
 /// Breaks the program, and sets the break flag.
 ///
 /// # Examples
@@ -429,82 +506,102 @@ pub fn brk(cpu: &mut Cpu, _mode: AddressingMode) {
     // TODO: impl. stack + interrupts
 }
 
-pub static OPCODES: Map<u8, OpCode> = phf_map! {
-    0xA9u8 => OpCode::new(0xA9, "LDA", lda, AddressingMode::Immediate, 2, 2),
-    0xA5u8 => OpCode::new(0xA5, "LDA", lda, AddressingMode::ZeroPage, 2, 3),
-    0xB5u8 => OpCode::new(0xB5, "LDA", lda, AddressingMode::ZeroPageX, 2, 4),
-    0xADu8 => OpCode::new(0xAD, "LDA", lda, AddressingMode::Absolute, 3, 4),
-    0xBDu8 => OpCode::new(0xBD, "LDA", lda, AddressingMode::AbsoluteX, 3, 4),
-    0xB9u8 => OpCode::new(0xB9, "LDA", lda, AddressingMode::AbsoluteY, 3, 4),
-    0xA1u8 => OpCode::new(0xA1, "LDA", lda, AddressingMode::IndirectX, 2, 6),
-    0xB1u8 => OpCode::new(0xB1, "LDA", lda, AddressingMode::IndirectY, 2, 5),
+macro_rules! opcodes {
+    ($($code:literal => ($name:ident, $addr_mode:ident, $bytes:literal, $cycles:literal),)*) => {
+        phf_map! {
+            $(
+                $code => OpCode::new($code, stringify!($name), $name, AddressingMode::$addr_mode, $bytes, $cycles),
+            )*
+        }
+    };
+}
 
-    0xA2u8 => OpCode::new(0xA2, "LDX", ldx, AddressingMode::Immediate, 2, 2),
-    0xA6u8 => OpCode::new(0xA6, "LDX", ldx, AddressingMode::ZeroPage, 2, 3),
-    0xB6u8 => OpCode::new(0xB6, "LDX", ldx, AddressingMode::ZeroPageY, 2, 4),
-    0xAEu8 => OpCode::new(0xAE, "LDX", ldx, AddressingMode::Absolute, 3, 4),
-    0xBEu8 => OpCode::new(0xBE, "LDX", ldx, AddressingMode::AbsoluteY, 3, 4),
+pub static OPCODES: Map<u8, OpCode> = opcodes! {
+    0xA9u8 => (lda, Immediate, 2, 2),
+    0xA5u8 => (lda, ZeroPage, 2, 3),
+    0xB5u8 => (lda, ZeroPageX, 2, 4),
+    0xADu8 => (lda, Absolute, 3, 4),
+    0xBDu8 => (lda, AbsoluteX, 3, 4),
+    0xB9u8 => (lda, AbsoluteY, 3, 4),
+    0xA1u8 => (lda, IndirectX, 2, 6),
+    0xB1u8 => (lda, IndirectY, 2, 5),
 
-    0xA0u8 => OpCode::new(0xA0, "LDY", ldy, AddressingMode::Immediate, 2, 2),
-    0xA4u8 => OpCode::new(0xA4, "LDY", ldy, AddressingMode::ZeroPage, 2, 3),
-    0xB4u8 => OpCode::new(0xB4, "LDY", ldy, AddressingMode::ZeroPageX, 2, 4),
-    0xACu8 => OpCode::new(0xAC, "LDY", ldy, AddressingMode::Absolute, 3, 4),
-    0xBCu8 => OpCode::new(0xBC, "LDY", ldy, AddressingMode::AbsoluteX, 3, 4),
+    0xA2u8 => (ldx, Immediate, 2, 2),
+    0xA6u8 => (ldx, ZeroPage, 2, 3),
+    0xB6u8 => (ldx, ZeroPageY, 2, 4),
+    0xAEu8 => (ldx, Absolute, 3, 4),
+    0xBEu8 => (ldx, AbsoluteY, 3, 4),
 
-    0x85u8 => OpCode::new(0x85, "STA", sta, AddressingMode::ZeroPage, 2, 3),
-    0x95u8 => OpCode::new(0x95, "STA", sta, AddressingMode::ZeroPageX, 2, 4),
-    0x8Du8 => OpCode::new(0x8D, "STA", sta, AddressingMode::Absolute, 3, 4),
-    0x9Du8 => OpCode::new(0x9D, "STA", sta, AddressingMode::AbsoluteX, 3, 5),
-    0x99u8 => OpCode::new(0x99, "STA", sta, AddressingMode::AbsoluteY, 3, 5),
-    0x81u8 => OpCode::new(0x81, "STA", sta, AddressingMode::IndirectX, 2, 6),
-    0x91u8 => OpCode::new(0x91, "STA", sta, AddressingMode::IndirectY, 2, 6),
+    0xA0u8 => (ldy, Immediate, 2, 2),
+    0xA4u8 => (ldy, ZeroPage, 2, 3),
+    0xB4u8 => (ldy, ZeroPageX, 2, 4),
+    0xACu8 => (ldy, Absolute, 3, 4),
+    0xBCu8 => (ldy, AbsoluteX, 3, 4),
 
-    0x86u8 => OpCode::new(0x86, "STX", stx, AddressingMode::ZeroPage, 2, 3),
-    0x96u8 => OpCode::new(0x96, "STX", stx, AddressingMode::ZeroPageY, 2, 4),
-    0x8Eu8 => OpCode::new(0x8E, "STX", stx, AddressingMode::Absolute, 3, 4),
+    0x85u8 => (sta, ZeroPage, 2, 3),
+    0x95u8 => (sta, ZeroPageX, 2, 4),
+    0x8Du8 => (sta, Absolute, 3, 4),
+    0x9Du8 => (sta, AbsoluteX, 3, 5),
+    0x99u8 => (sta, AbsoluteY, 3, 5),
+    0x81u8 => (sta, IndirectX, 2, 6),
+    0x91u8 => (sta, IndirectY, 2, 6),
 
-    0x84u8 => OpCode::new(0x84, "STY", sty, AddressingMode::ZeroPage, 2, 3),
-    0x94u8 => OpCode::new(0x94, "STY", sty, AddressingMode::ZeroPageX, 2, 4),
-    0x8Cu8 => OpCode::new(0x8C, "STY", sty, AddressingMode::Absolute, 3, 4),
+    0x86u8 => (stx, ZeroPage, 2, 3),
+    0x96u8 => (stx, ZeroPageY, 2, 4),
+    0x8Eu8 => (stx, Absolute, 3, 4),
 
-    0xAAu8 => OpCode::new(0xAA, "TAX", tax, AddressingMode::NoneAddressing, 1, 2),
+    0x84u8 => (sty, ZeroPage, 2, 3),
+    0x94u8 => (sty, ZeroPageX, 2, 4),
+    0x8Cu8 => (sty, Absolute, 3, 4),
 
-    0xA8u8 => OpCode::new(0xA8, "TAY", tay, AddressingMode::NoneAddressing, 1, 2),
+    0xAAu8 => (tax, NoneAddressing, 1, 2),
 
-    0xBAu8 => OpCode::new(0xBA, "TSX", tsx, AddressingMode::NoneAddressing, 1, 2),
+    0xA8u8 => (tay, NoneAddressing, 1, 2),
 
-    0x8Au8 => OpCode::new(0x8A, "TXA", txa, AddressingMode::NoneAddressing, 1, 2),
+    0xBAu8 => (tsx, NoneAddressing, 1, 2),
 
-    0x9Au8 => OpCode::new(0x9A, "TXS", txs, AddressingMode::NoneAddressing, 1, 2),
+    0x8Au8 => (txa, NoneAddressing, 1, 2),
 
-    0x98u8 => OpCode::new(0x98, "TYA", tya, AddressingMode::NoneAddressing, 1, 2),
+    0x9Au8 => (txs, NoneAddressing, 1, 2),
 
-    0xE8u8 => OpCode::new(0xE8, "INX", inx, AddressingMode::NoneAddressing, 1, 2),
+    0x98u8 => (tya, NoneAddressing, 1, 2),
 
-    0xC8u8 => OpCode::new(0xC8, "INY", iny, AddressingMode::NoneAddressing, 1, 2),
+    0xE8u8 => (inx, NoneAddressing, 1, 2),
 
-    0xE6u8 => OpCode::new(0xE6, "INC", inc, AddressingMode::ZeroPage, 2, 5),
-    0xF6u8 => OpCode::new(0xF6, "INC", inc, AddressingMode::ZeroPageX, 2, 6),
-    0xEEu8 => OpCode::new(0xEE, "INC", inc, AddressingMode::Absolute, 3, 6),
-    0xFEu8 => OpCode::new(0xFE, "INC", inc, AddressingMode::AbsoluteX, 3, 7),
+    0xC8u8 => (iny, NoneAddressing, 1, 2),
 
-    // 0x69u8 => OpCode::new(0x69, "ADC", adc, AddressingMode::Immediate, 2, 2),
-    // 0x65u8 => OpCode::new(0x65, "ADC", adc, AddressingMode::ZeroPage, 2, 3),
-    // 0x75u8 => OpCode::new(0x75, "ADC", adc, AddressingMode::ZeroPageX, 2, 4),
-    // 0x6Du8 => OpCode::new(0x6D, "ADC", adc, AddressingMode::Absolute, 3, 4),
-    // 0x7Du8 => OpCode::new(0x7D, "ADC", adc, AddressingMode::AbsoluteX, 3, 4),
-    // 0x79u8 => OpCode::new(0x79, "ADC", adc, AddressingMode::AbsoluteY, 3, 4),
-    // 0x61u8 => OpCode::new(0x61, "ADC", adc, AddressingMode::IndirectX, 2, 6),
-    // 0x71u8 => OpCode::new(0x71, "ADC", adc, AddressingMode::IndirectY, 2, 5),
+    0xE6u8 => (inc, ZeroPage, 2, 5),
+    0xF6u8 => (inc, ZeroPageX, 2, 6),
+    0xEEu8 => (inc, Absolute, 3, 6),
+    0xFEu8 => (inc, AbsoluteX, 3, 7),
 
-    0x29u8 => OpCode::new(0x29, "AND", and, AddressingMode::Immediate, 2, 2),
-    0x25u8 => OpCode::new(0x25, "AND", and, AddressingMode::ZeroPage, 2, 3),
-    0x35u8 => OpCode::new(0x35, "AND", and, AddressingMode::ZeroPageX, 2, 4),
-    0x2Du8 => OpCode::new(0x2D, "AND", and, AddressingMode::Absolute, 3, 4),
-    0x3Du8 => OpCode::new(0x3D, "AND", and, AddressingMode::AbsoluteX, 3, 4),
-    0x39u8 => OpCode::new(0x39, "AND", and, AddressingMode::AbsoluteY, 3, 4),
-    0x21u8 => OpCode::new(0x21, "AND", and, AddressingMode::IndirectX, 2, 6),
-    0x31u8 => OpCode::new(0x31, "AND", and, AddressingMode::IndirectY, 2, 5),
+    // 0x69u8 => (adc, Immediate, 2, 2),
+    // 0x65u8 => (adc, ZeroPage, 2, 3),
+    // 0x75u8 => (adc, ZeroPageX, 2, 4),
+    // 0x6Du8 => (adc, Absolute, 3, 4),
+    // 0x7Du8 => (adc, AbsoluteX, 3, 4),
+    // 0x79u8 => (adc, AbsoluteY, 3, 4),
+    // 0x61u8 => (adc, IndirectX, 2, 6),
+    // 0x71u8 => (adc, IndirectY, 2, 5),
 
-    0x00u8 => OpCode::new(0x00, "BRK", brk, AddressingMode::NoneAddressing, 1, 7),
+    0x29u8 => (and, Immediate, 2, 2),
+    0x25u8 => (and, ZeroPage, 2, 3),
+    0x35u8 => (and, ZeroPageX, 2, 4),
+    0x2Du8 => (and, Absolute, 3, 4),
+    0x3Du8 => (and, AbsoluteX, 3, 4),
+    0x39u8 => (and, AbsoluteY, 3, 4),
+    0x21u8 => (and, IndirectX, 2, 6),
+    0x31u8 => (and, IndirectY, 2, 5),
+
+    0x0Au8 => (asl, NoneAddressing, 1, 2),
+    0x06u8 => (asl, ZeroPage, 2, 5),
+    0x16u8 => (asl, ZeroPageX, 2, 6),
+    0x0Eu8 => (asl, Absolute, 3, 6),
+    0x1Eu8 => (asl, AbsoluteX, 3, 7),
+
+    0x90u8 => (bcc, Relative, 2, 2),
+
+    0x38u8 => (sec, NoneAddressing, 1, 2),
+
+    0x00u8 => (brk, NoneAddressing, 1, 7),
 };
