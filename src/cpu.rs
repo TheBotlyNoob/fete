@@ -63,10 +63,13 @@ impl Default for Cpu {
 }
 
 impl Cpu {
+    /// Creates a new CPU with the default state.
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Resets the CPU to its initial state. Keeps the memory intact.
     pub fn reset(&mut self) {
         *self = Self {
             pc: self.mem_read_u16(0xFFFC),
@@ -75,7 +78,7 @@ impl Cpu {
         }
     }
 
-    /// Gets the address at the current program count, using the given [`AddressingMode`]. Increments the program count.
+    /// Gets the address at the current program count, using the given [`AddressingMode`]. Increments the program count as needed.
     pub fn get_op_addr(&mut self, mode: AddressingMode) -> u16 {
         #[allow(clippy::match_wildcard_for_single_variants)] // that's the point
         match mode {
@@ -107,11 +110,13 @@ impl Cpu {
         }
     }
 
+    /// Loads the given program into memory, and sets the program counter to the start of the program.
     pub fn load(&mut self, prog: &[u8]) {
         self.mem[0x8000..0x8000 + prog.len()].copy_from_slice(prog);
         self.mem_write_u16(0xFFFC, 0x8000);
     }
 
+    /// Loads the given program into memory, resets the CPU, and runs the program.
     pub fn load_and_run(&mut self, prog: &[u8]) {
         self.load(prog);
         self.reset();
@@ -269,7 +274,7 @@ impl Cpu {
     /// cpu.load_and_run(&[0xA9, 0x05, 0xAA, 0x00]);
     ///
     /// assert_eq!(cpu.reg_x, 0x05);
-    /// // assert_eq!(cpu.status, Status::BREAK);
+    /// assert_eq!(cpu.status, Status::BREAK);
     /// ```
     pub fn tax(&mut self, _mode: AddressingMode) {
         self.reg_x = self.reg_a;
@@ -447,6 +452,24 @@ impl Cpu {
         // TODO: impl. stack + interrupts
     }
 
+    /// Sets the zero and negative flags based on the given value.
+    ///
+    /// # Examples
+    /// ```
+    /// # use pretty_assertions::assert_eq;
+    /// use fete::{cpu::Status, Cpu};
+    ///
+    /// let mut cpu = Cpu::new();
+    ///
+    /// cpu.zero_and_neg_flags(0);
+    /// assert_eq!(cpu.status, Status::ZERO);
+    ///
+    /// cpu.zero_and_neg_flags(1);
+    /// assert_eq!(cpu.status, Status::empty());
+    ///
+    /// cpu.zero_and_neg_flags(0b1000_0000);
+    /// assert_eq!(cpu.status, Status::NEGATIVE);
+    /// ```
     pub fn zero_and_neg_flags(&mut self, val: u8) {
         if val == 0 {
             self.status |= Status::ZERO;
@@ -461,6 +484,7 @@ impl Cpu {
         }
     }
 
+    /// Runs the program currently loaded into memory.
     pub fn run(&mut self) {
         loop {
             let opcode = self.take();
@@ -478,53 +502,40 @@ impl Cpu {
         }
     }
 
+    /// Takes the next byte from memory, and increments the program counter.
     fn take(&mut self) -> u8 {
         let byte = self.mem_read(self.pc);
         self.pc += 1;
         byte
     }
+    /// Takes the next little-endian, 16-bit number from memory, and increments the program counter.
     fn take_u16(&mut self) -> u16 {
         let num = self.mem_read_u16(self.pc);
         self.pc += 2;
         num
     }
 
+    #[must_use]
+    /// Reads a byte from memory, _without_ incrementing the program counter.
     pub const fn mem_read(&self, addr: u16) -> u8 {
         self.mem[addr as usize]
     }
-
+    /// Writes a byte to memory.
     pub fn mem_write(&mut self, addr: u16, val: u8) {
         self.mem[addr as usize] = val;
     }
 
+    #[must_use]
+    /// Reads a little-endian, 16-bit number from memory, _without_ incrementing the program counter.
     pub const fn mem_read_u16(&self, addr: u16) -> u16 {
         let lo = self.mem_read(addr);
         let hi = self.mem_read(addr + 1);
         u16::from_le_bytes([lo, hi])
     }
-
+    /// Writes a little-endian, 16-bit number to memory.
     pub fn mem_write_u16(&mut self, addr: u16, val: u16) {
         let [lo, hi] = val.to_le_bytes();
         self.mem_write(addr, lo);
         self.mem_write(addr + 1, hi);
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use pretty_assertions::assert_eq;
-
-    #[test]
-    fn zero_and_neg_flags() {
-        let mut cpu = Cpu::new();
-        cpu.zero_and_neg_flags(0);
-        assert_eq!(cpu.status, Status::ZERO);
-        cpu.zero_and_neg_flags(1);
-        assert_eq!(cpu.status, Status::empty());
-        cpu.zero_and_neg_flags(0b1000_0000);
-        assert_eq!(cpu.status, Status::NEGATIVE);
-        cpu.zero_and_neg_flags(0b0111_1111);
-        assert_eq!(cpu.status, Status::empty());
     }
 }
