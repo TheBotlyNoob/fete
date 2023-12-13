@@ -166,7 +166,8 @@ impl Cpu {
                 self.mem_read_u16(real_addr) + u16::from(self.reg_x)
             }
             AddressingMode::IndirectY => {
-                self.mem_read_u16(u16::from(self.mem_read(self.pc))) + u16::from(self.reg_y)
+                let real_addr = u16::from(self.take());
+                self.mem_read_u16(real_addr) + u16::from(self.reg_y)
             }
             AddressingMode::NoneAddressing => {
                 unreachable!("AddressingMode::NoneAddressing is not a valid addressing mode")
@@ -299,12 +300,105 @@ mod test {
     fn op_addr_zero_page() {
         let mut cpu = Cpu::new();
         cpu.mem_write(0x0000, 0x05);
-        cpu.mem_write(0x0005, 0x06);
 
-        assert_eq!(cpu.get_op_addr(AddressingMode::ZeroPage), 0x0000);
+        assert_eq!(cpu.get_op_addr(AddressingMode::ZeroPage), 0x05);
         assert_eq!(cpu.pc, 0x0001);
 
-        assert_eq!(cpu.get_op_addr(AddressingMode::ZeroPage), 0x0005);
+        assert_eq!(cpu.get_op_addr(AddressingMode::ZeroPage), 0x00);
         assert_eq!(cpu.pc, 0x0002);
+    }
+
+    #[test]
+    fn op_addr_zero_page_x() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write(0x0000, 0x05);
+        cpu.reg_x = 0x05;
+
+        assert_eq!(cpu.get_op_addr(AddressingMode::ZeroPageX), 0x0A);
+        assert_eq!(cpu.pc, 0x0001);
+
+        assert_eq!(cpu.get_op_addr(AddressingMode::ZeroPageX), 0x05);
+        assert_eq!(cpu.pc, 0x0002);
+    }
+
+    #[test]
+    fn op_addr_zero_page_y() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write(0x0000, 0x05);
+        cpu.reg_y = 0x05;
+
+        assert_eq!(cpu.get_op_addr(AddressingMode::ZeroPageY), 0x0A);
+        assert_eq!(cpu.pc, 0x0001);
+
+        assert_eq!(cpu.get_op_addr(AddressingMode::ZeroPageY), 0x05);
+        assert_eq!(cpu.pc, 0x0002);
+    }
+
+    #[test]
+    fn op_addr_absolute() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write_u16(0x0000, 0x1234);
+
+        assert_eq!(cpu.get_op_addr(AddressingMode::Absolute), 0x1234);
+        assert_eq!(cpu.pc, 0x0002);
+    }
+
+    #[test]
+    fn op_addr_absolute_x() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write_u16(0x0000, 0x1234);
+        cpu.reg_x = 0x05;
+
+        assert_eq!(cpu.get_op_addr(AddressingMode::AbsoluteX), 0x1239);
+        assert_eq!(cpu.pc, 0x0002);
+    }
+
+    #[test]
+    fn op_addr_absolute_y() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write_u16(0x0000, 0x1234);
+        cpu.reg_y = 0x05;
+
+        assert_eq!(cpu.get_op_addr(AddressingMode::AbsoluteY), 0x1239);
+        assert_eq!(cpu.pc, 0x0002);
+    }
+
+    #[test]
+    fn op_addr_indirect() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write_u16(0x0000, 0x1234);
+        cpu.mem_write_u16(0x1234, 0x5678);
+
+        assert_eq!(cpu.get_op_addr(AddressingMode::Indirect), 0x5678);
+        assert_eq!(cpu.pc, 0x0002);
+    }
+
+    #[test]
+    fn op_addr_indirect_x() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write(0x0000, 0x12);
+        cpu.mem_write_u16(0x0012, 0x1234);
+        cpu.reg_x = 0x05;
+
+        assert_eq!(cpu.get_op_addr(AddressingMode::IndirectX), 0x1239);
+        assert_eq!(cpu.pc, 0x0001);
+    }
+
+    #[test]
+    fn op_addr_indirect_y() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write(0x0000, 0x12);
+        cpu.mem_write_u16(0x0012, 0x1234);
+        cpu.reg_y = 0x05;
+
+        assert_eq!(cpu.get_op_addr(AddressingMode::IndirectY), 0x1239);
+        assert_eq!(cpu.pc, 0x0001);
+    }
+
+    #[test]
+    #[should_panic = "AddressingMode::NoneAddressing is not a valid addressing mode"]
+    fn op_addr_none_addressing() {
+        let mut cpu = Cpu::new();
+        cpu.get_op_addr(AddressingMode::NoneAddressing);
     }
 }
