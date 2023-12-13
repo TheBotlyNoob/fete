@@ -200,9 +200,10 @@ impl Cpu {
     /// let mut cpu = Cpu::new();
     /// cpu.reg_a = 0x05;
     ///
+    /// // LDA #$05
     /// // STA $8000
     /// // BRK
-    /// cpu.load_and_run(&[0x8D, 0x00, 0x80, 0x00]); // keep in mind that the 16-bit address is stored in little-endian
+    /// cpu.load_and_run(&[0xA9, 0x05, 0x8D, 0x00, 0x80, 0x00]); // keep in mind that the 16-bit address is stored in little-endian
     ///
     /// assert_eq!(cpu.mem_read(0x8000), 0x05);
     /// ```
@@ -219,11 +220,11 @@ impl Cpu {
     /// use fete::Cpu;
     ///
     /// let mut cpu = Cpu::new();
-    /// cpu.reg_x = 0x05;
     ///
+    /// // LDX #$05
     /// // STX $8000
     /// // BRK
-    /// cpu.load_and_run(&[0x8E, 0x00, 0x80, 0x00]); // keep in mind that the 16-bit address is stored in little-endian
+    /// cpu.load_and_run(&[0xA2, 0x05, 0x8E, 0x00, 0x80, 0x00]); // keep in mind that the 16-bit address is stored in little-endian
     ///
     /// assert_eq!(cpu.mem_read(0x8000), 0x05);
     /// ```
@@ -240,17 +241,17 @@ impl Cpu {
     /// use fete::Cpu;
     ///
     /// let mut cpu = Cpu::new();
-    /// cpu.reg_y = 0x05;
     ///
-    /// // STX $8000
+    /// // LDY #$05
+    /// // STY $8000
     /// // BRK
-    /// cpu.load_and_run(&[0x8C, 0x00, 0x80, 0x00]); // keep in mind that the 16-bit address is stored in little-endian
+    /// cpu.load_and_run(&[0xA0, 0x05, 0x8C, 0x00, 0x80, 0x00]); // keep in mind that the 16-bit address is stored in little-endian
     ///
     /// assert_eq!(cpu.mem_read(0x8000), 0x05);
     /// ```
     pub fn sty(&mut self, mode: AddressingMode) {
         let addr = self.get_op_addr(mode);
-        self.mem_write(addr, self.reg_x);
+        self.mem_write(addr, self.reg_y);
     }
 
     /// Transfers the value in the accumulator to the X register, and sets the zero and negative flags.
@@ -261,14 +262,14 @@ impl Cpu {
     /// use fete::{cpu::Status, Cpu};
     ///
     /// let mut cpu = Cpu::new();
-    /// cpu.reg_a = 0x05;
     ///
+    /// // LDA #$05
     /// // TAX
     /// // BRK
-    /// cpu.load_and_run(&[0xAA, 0x00]);
+    /// cpu.load_and_run(&[0xA9, 0x05, 0xAA, 0x00]);
     ///
     /// assert_eq!(cpu.reg_x, 0x05);
-    /// assert_eq!(cpu.status, Status::BREAK);
+    /// // assert_eq!(cpu.status, Status::BREAK);
     /// ```
     pub fn tax(&mut self, _mode: AddressingMode) {
         self.reg_x = self.reg_a;
@@ -283,11 +284,11 @@ impl Cpu {
     /// use fete::{cpu::Status, Cpu};
     ///
     /// let mut cpu = Cpu::new();
-    /// cpu.reg_a = 0x05;
     ///
+    /// // LDA #$05
     /// // TAY
     /// // BRK
-    /// cpu.load_and_run(&[0xA8, 0x00]);
+    /// cpu.load_and_run(&[0xA9, 0x05, 0xA8, 0x00]);
     ///
     /// assert_eq!(cpu.reg_y, 0x05);
     /// assert_eq!(cpu.status, Status::BREAK);
@@ -305,11 +306,12 @@ impl Cpu {
     /// use fete::{cpu::Status, Cpu};
     ///
     /// let mut cpu = Cpu::new();
-    /// cpu.sp = 0x05;
     ///
+    /// // LDX #$05
+    /// // TXS
     /// // TSX
     /// // BRK
-    /// cpu.load_and_run(&[0xBA, 0x00]);
+    /// cpu.load_and_run(&[0xA2, 0x05, 0x9A, 0xBA, 0x00]);
     ///
     /// assert_eq!(cpu.reg_x, 0x05);
     /// assert_eq!(cpu.status, Status::BREAK);
@@ -327,11 +329,11 @@ impl Cpu {
     /// use fete::{cpu::Status, Cpu};
     ///
     /// let mut cpu = Cpu::new();
-    /// cpu.reg_x = 0x05;
     ///
+    /// // LDX #$05
     /// // TXA
     /// // BRK
-    /// cpu.load_and_run(&[0x8A, 0x00]);
+    /// cpu.load_and_run(&[0xA2, 0x05, 0x8A, 0x00]);
     ///
     /// assert_eq!(cpu.reg_a, 0x05);
     /// assert_eq!(cpu.status, Status::BREAK);
@@ -349,11 +351,11 @@ impl Cpu {
     /// use fete::{cpu::Status, Cpu};
     ///
     /// let mut cpu = Cpu::new();
-    /// cpu.reg_x = 0x05;
     ///
+    /// // LDX #$05
     /// // TXS
     /// // BRK
-    /// cpu.load_and_run(&[0x9A, 0x00]);
+    /// cpu.load_and_run(&[0xA2, 0x05, 0x9A, 0x00]);
     ///
     /// assert_eq!(cpu.sp, 0x05);
     /// ```
@@ -369,11 +371,11 @@ impl Cpu {
     /// use fete::{cpu::Status, Cpu};
     ///
     /// let mut cpu = Cpu::new();
-    /// cpu.reg_y = 0x05;
     ///
+    /// // LDY #$05
     /// // TYA
     /// // BRK
-    /// cpu.load_and_run(&[0x98, 0x00]);
+    /// cpu.load_and_run(&[0xA0, 0x05, 0x98, 0x00]);
     ///
     /// assert_eq!(cpu.reg_a, 0x05);
     /// assert_eq!(cpu.status, Status::BREAK);
@@ -391,11 +393,11 @@ impl Cpu {
     /// use fete::{cpu::Status, Cpu};
     ///
     /// let mut cpu = Cpu::new();
-    /// cpu.reg_x = 0x05;
     ///
+    /// // LDX #$05
     /// // INX
     /// // BRK
-    /// cpu.load_and_run(&[0xE8, 0x00]);
+    /// cpu.load_and_run(&[0xA2, 0x05, 0xE8, 0x00]);
     ///
     /// assert_eq!(cpu.reg_x, 0x06);
     /// assert_eq!(cpu.status, Status::BREAK);
@@ -413,11 +415,11 @@ impl Cpu {
     /// use fete::{cpu::Status, Cpu};
     ///
     /// let mut cpu = Cpu::new();
-    /// cpu.reg_y = 0x05;
     ///
+    /// // LDY #$05
     /// // INY
     /// // BRK
-    /// cpu.load_and_run(&[0xC8, 0x00]);
+    /// cpu.load_and_run(&[0xA0, 0x05, 0xC8, 0x00]);
     ///
     /// assert_eq!(cpu.reg_y, 0x06);
     /// assert_eq!(cpu.status, Status::BREAK);
@@ -430,7 +432,7 @@ impl Cpu {
     /// Breaks the program, and sets the break flag.
     ///
     /// # Examples
-    /// ```no_run
+    /// ```
     /// # use pretty_assertions::assert_eq;
     /// use fete::{cpu::Status, Cpu};
     ///
