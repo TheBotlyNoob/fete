@@ -170,7 +170,8 @@ impl Cpu {
                 self.mem_read_u16(real_addr) + u16::from(self.reg_y)
             }
             AddressingMode::NoneAddressing => {
-                unreachable!("AddressingMode::NoneAddressing is not a valid addressing mode")
+                log::warn!("AddressingMode::NoneAddressing is not a valid addressing mode");
+                0x0000
             }
         }
     }
@@ -239,6 +240,7 @@ impl Cpu {
             }
 
             if self.status.contains(Status::BREAK) {
+                log::info!("break");
                 break;
             }
         }
@@ -286,6 +288,7 @@ impl Cpu {
 mod test {
     use super::*;
     use pretty_assertions::assert_eq;
+    use test_log::test;
 
     #[test]
     fn op_addr_immediate() {
@@ -396,9 +399,9 @@ mod test {
     }
 
     #[test]
-    #[should_panic = "AddressingMode::NoneAddressing is not a valid addressing mode"]
     fn op_addr_none_addressing() {
         let mut cpu = Cpu::new();
-        cpu.get_op_addr(AddressingMode::NoneAddressing);
+
+        assert_eq!(cpu.get_op_addr(AddressingMode::NoneAddressing), 0x0000);
     }
 }
