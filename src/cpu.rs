@@ -2,16 +2,80 @@ use bitflags::bitflags;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AddressingMode {
+    /// Immediate addressing allows the programmer to directly specify an 8 bit constant within the instruction.
+    /// It is indicated by a '#' symbol followed by an numeric expression. For example:
+    /// ```x86asm
+    /// LDA #10         ;Load 10 ($0A) into the accumulator
+    /// LDX #LO LABEL   ;Load the LSB of a 16 bit address into X
+    /// LDY #HI LABEL   ;Load the MSB of a 16 bit address into Y
+    /// ```
     Immediate,
+    /// An instruction using zero page addressing mode has only an 8 bit address operand.
+    /// This limits it to addressing only the first 256 bytes of memory (e.g. $0000 to $00FF) where the most significant byte of the address is always zero.
+    /// In zero page mode only the least significant byte of the address is held in the instruction making it shorter by one byte (important for space saving) and one less memory fetch during execution (important for speed).
+    /// An assembler will automatically select zero page addressing mode if the operand evaluates to a zero page address and the instruction supports the mode (not all do).
+    /// ```x86asm
+    /// LDA $00         ;Load accumulator from $00
+    /// ASL ANSWER      ;Shift labelled location ANSWER left
+    /// ```
     ZeroPage,
+    /// The address to be accessed by an instruction using indexed zero page addressing is calculated by taking the 8 bit zero page address from the instruction and adding the current value of the X register to it.
+    /// For example if the X register contains $0F and the instruction LDA $80,X is executed then the accumulator will be loaded from $008F (e.g. $80 + $0F => $8F).
+    ///
+    /// NB: The address calculation wraps around if the sum of the base address and the register exceed $FF.
+    /// If we repeat the last example but with $FF in the X register then the accumulator will be loaded from $007F (e.g. $80 + $FF => $7F) and not $017F.
+    /// ```x86asm
+    /// STY $10,X       ;Save the Y register at location on zero page
+    /// AND TEMP,X      ;Logical AND accumulator with a zero page value
+    /// ```
     ZeroPageX,
+    /// The address to be accessed by an instruction using indexed zero page addressing is calculated by taking the 8 bit zero page address from the instruction and adding the current value of the Y register to it.
+    /// This mode can only be used with the LDX and STX instructions.
+    /// ```x86asm
+    /// STX $10,Y       ;Save the X register at location on zero page
+    /// AND TEMP,Y      ;Logical AND accumulator with a zero page value
+    /// ```
     ZeroPageY,
+    /// Instructions using absolute addressing contain a full 16 bit address to identify the target location.
+    /// ```x86asm
+    /// JMP $1234       ;Jump to location $1234
+    /// JSR WIBBLE      ;Call subroutine WIBBLE
+    /// ```
     Absolute,
+    /// The address to be accessed by an instruction using X register indexed absolute addressing is computed by taking the 16 bit address from the instruction and added the contents of the X register.
+    /// For example if X contains $92 then an STA $2000,X instruction will store the accumulator at $2092 (e.g. $2000 + $92).
+    /// ```x86asm
+    /// STA $3000,X     ;Store accumulator between $3000 and $30FF
+    /// ROR CRC,X       ;Rotate right one bit
+    /// ```
     AbsoluteX,
+    /// The Y register indexed absolute addressing mode is the same as the previous mode only with the contents of the Y register added to the 16 bit address from the instruction.
+    /// ```x86asm
+    /// AND $4000,Y     ;Perform a logical AND with a byte of memory
+    /// STA MEM,Y       ;Store accumulator in memory
+    /// ```
     AbsoluteY,
+    /// JMP is the only 6502 instruction to support indirection. The instruction contains a 16 bit address which identifies the location of the least significant byte of another 16 bit memory address which is the real target of the instruction.
+    /// For example if location $0120 contains $FC and location $0121 contains $BA then the instruction JMP ($0120) will cause the next instruction execution to occur at $BAFC (e.g. the contents of $0120 and $0121).
+    /// ```x86asm
+    /// JMP ($FFFC)     ;Force a power on reset
+    /// JMP (TARGET)    ;Jump via a labelled memory area
+    /// ```
     Indirect,
+    /// Indexed indirect addressing is normally used in conjunction with a table of address held on zero page.
+    /// The address of the table is taken from the instruction and the X register added to it (with zero page wrap around) to give the location of the least significant byte of the target address.
+    /// ```x86asm
+    /// LDA ($40,X)     ;Load a byte indirectly from memory
+    /// STA (MEM,X)     ;Store accumulator indirectly into memory
+    /// ```
     IndirectX,
+    /// Indirect indirect addressing is the most common indirection mode used on the 6502. In instruction contains the zero page location of the least significant byte of 16 bit address. The Y register is dynamically added to this value to generated the actual target address for operation.
+    /// ```x86asm
+    /// LDA ($40),Y     ;Load a byte indirectly from memory
+    /// STA (DST),Y     ;Store accumulator indirectly into memory
+    /// ```
     IndirectY,
+    /// For many 6502 instructions the source and destination of the information to be manipulated is implied directly by the function of the instruction itself and no further operand needs to be specified. Operations like 'Clear Carry Flag' (CLC) and 'Return from Subroutine' (RTS) are implicit.
     NoneAddressing,
 }
 
@@ -123,333 +187,10 @@ impl Cpu {
         self.run();
     }
 
-    /// Loads the given value into the accumulator, and sets the zero and negative flags.
-    ///
-    /// # Examples
-    /// ```
-    /// # use pretty_assertions::assert_eq;
-    /// use fete::{cpu::Status, Cpu};
-    ///
-    /// let mut cpu = Cpu::new();
-    ///
-    /// // LDA #$05
-    /// // BRK
-    /// cpu.load_and_run(&[0xA9, 0x05, 0x00]);
-    ///
-    /// assert_eq!(cpu.reg_a, 0x05);
-    /// assert_eq!(cpu.status, Status::BREAK);
-    /// ```
-    pub fn lda(&mut self, mode: AddressingMode) {
-        let addr = self.get_op_addr(mode);
-        let val = self.mem_read(addr);
-
+    /// Sets the accumulator register, and sets the zero and negative flags.
+    pub fn set_reg_a(&mut self, val: u8) {
         self.reg_a = val;
         self.zero_and_neg_flags(val);
-    }
-
-    /// Loads the given value into the X register, and sets the zero and negative flags.
-    ///
-    /// # Examples
-    /// ```
-    /// # use pretty_assertions::assert_eq;
-    /// use fete::{cpu::Status, Cpu};
-    ///
-    /// let mut cpu = Cpu::new();
-    ///
-    /// // LDX #$05
-    /// // BRK
-    /// cpu.load_and_run(&[0xA2, 0x05, 0x00]);
-    ///
-    /// assert_eq!(cpu.reg_x, 0x05);
-    /// assert_eq!(cpu.status, Status::BREAK);
-    /// ```
-    pub fn ldx(&mut self, mode: AddressingMode) {
-        let addr = self.get_op_addr(mode);
-        let val = self.mem_read(addr);
-
-        self.reg_x = val;
-        self.zero_and_neg_flags(val);
-    }
-
-    /// Loads the given value into the Y register, and sets the zero and negative flags.
-    ///
-    /// # Examples
-    /// ```
-    /// # use pretty_assertions::assert_eq;
-    /// use fete::{cpu::Status, Cpu};
-    ///
-    /// let mut cpu = Cpu::new();
-    ///
-    /// // LDY #$05
-    /// // BRK
-    /// cpu.load_and_run(&[0xA0, 0x05, 0x00]);
-    ///
-    /// assert_eq!(cpu.reg_y, 0x05);
-    /// assert_eq!(cpu.status, Status::BREAK);
-    /// ```
-    pub fn ldy(&mut self, mode: AddressingMode) {
-        let addr = self.get_op_addr(mode);
-        let val = self.mem_read(addr);
-
-        self.reg_y = val;
-        self.zero_and_neg_flags(val);
-    }
-
-    /// Stores the value in the accumulator into memory.
-    ///
-    /// # Examples
-    /// ```
-    /// # use pretty_assertions::assert_eq;
-    /// use fete::Cpu;
-    ///
-    /// let mut cpu = Cpu::new();
-    /// cpu.reg_a = 0x05;
-    ///
-    /// // LDA #$05
-    /// // STA $8000
-    /// // BRK
-    /// cpu.load_and_run(&[0xA9, 0x05, 0x8D, 0x00, 0x80, 0x00]); // keep in mind that the 16-bit address is stored in little-endian
-    ///
-    /// assert_eq!(cpu.mem_read(0x8000), 0x05);
-    /// ```
-    pub fn sta(&mut self, mode: AddressingMode) {
-        let addr = self.get_op_addr(mode);
-        self.mem_write(addr, self.reg_a);
-    }
-
-    /// Stores the value in the X register into memory.
-    ///
-    /// # Examples
-    /// ```
-    /// # use pretty_assertions::assert_eq;
-    /// use fete::Cpu;
-    ///
-    /// let mut cpu = Cpu::new();
-    ///
-    /// // LDX #$05
-    /// // STX $8000
-    /// // BRK
-    /// cpu.load_and_run(&[0xA2, 0x05, 0x8E, 0x00, 0x80, 0x00]); // keep in mind that the 16-bit address is stored in little-endian
-    ///
-    /// assert_eq!(cpu.mem_read(0x8000), 0x05);
-    /// ```
-    pub fn stx(&mut self, mode: AddressingMode) {
-        let addr = self.get_op_addr(mode);
-        self.mem_write(addr, self.reg_x);
-    }
-
-    /// Stores the value in the Y register into memory.
-    ///
-    /// # Examples
-    /// ```
-    /// # use pretty_assertions::assert_eq;
-    /// use fete::Cpu;
-    ///
-    /// let mut cpu = Cpu::new();
-    ///
-    /// // LDY #$05
-    /// // STY $8000
-    /// // BRK
-    /// cpu.load_and_run(&[0xA0, 0x05, 0x8C, 0x00, 0x80, 0x00]); // keep in mind that the 16-bit address is stored in little-endian
-    ///
-    /// assert_eq!(cpu.mem_read(0x8000), 0x05);
-    /// ```
-    pub fn sty(&mut self, mode: AddressingMode) {
-        let addr = self.get_op_addr(mode);
-        self.mem_write(addr, self.reg_y);
-    }
-
-    /// Transfers the value in the accumulator to the X register, and sets the zero and negative flags.
-    ///
-    /// # Examples
-    /// ```
-    /// # use pretty_assertions::assert_eq;
-    /// use fete::{cpu::Status, Cpu};
-    ///
-    /// let mut cpu = Cpu::new();
-    ///
-    /// // LDA #$05
-    /// // TAX
-    /// // BRK
-    /// cpu.load_and_run(&[0xA9, 0x05, 0xAA, 0x00]);
-    ///
-    /// assert_eq!(cpu.reg_x, 0x05);
-    /// assert_eq!(cpu.status, Status::BREAK);
-    /// ```
-    pub fn tax(&mut self, _mode: AddressingMode) {
-        self.reg_x = self.reg_a;
-        self.zero_and_neg_flags(self.reg_x);
-    }
-
-    /// Transfers the value in the accumulator to the Y register, and sets the zero and negative flags.
-    ///
-    /// # Examples
-    /// ```
-    /// # use pretty_assertions::assert_eq;
-    /// use fete::{cpu::Status, Cpu};
-    ///
-    /// let mut cpu = Cpu::new();
-    ///
-    /// // LDA #$05
-    /// // TAY
-    /// // BRK
-    /// cpu.load_and_run(&[0xA9, 0x05, 0xA8, 0x00]);
-    ///
-    /// assert_eq!(cpu.reg_y, 0x05);
-    /// assert_eq!(cpu.status, Status::BREAK);
-    /// ```
-    pub fn tay(&mut self, _mode: AddressingMode) {
-        self.reg_y = self.reg_a;
-        self.zero_and_neg_flags(self.reg_y);
-    }
-
-    /// Transfers the value in the stack pointer to the X register, and sets the zero and negative flags.
-    ///
-    /// # Examples
-    /// ```
-    /// # use pretty_assertions::assert_eq;
-    /// use fete::{cpu::Status, Cpu};
-    ///
-    /// let mut cpu = Cpu::new();
-    ///
-    /// // LDX #$05
-    /// // TXS
-    /// // TSX
-    /// // BRK
-    /// cpu.load_and_run(&[0xA2, 0x05, 0x9A, 0xBA, 0x00]);
-    ///
-    /// assert_eq!(cpu.reg_x, 0x05);
-    /// assert_eq!(cpu.status, Status::BREAK);
-    /// ```
-    pub fn tsx(&mut self, _mode: AddressingMode) {
-        self.reg_x = self.sp;
-        self.zero_and_neg_flags(self.reg_x);
-    }
-
-    /// Transfers the value in the X register to the accumulator, and sets the zero and negative flags.
-    ///
-    /// # Examples
-    /// ```
-    /// # use pretty_assertions::assert_eq;
-    /// use fete::{cpu::Status, Cpu};
-    ///
-    /// let mut cpu = Cpu::new();
-    ///
-    /// // LDX #$05
-    /// // TXA
-    /// // BRK
-    /// cpu.load_and_run(&[0xA2, 0x05, 0x8A, 0x00]);
-    ///
-    /// assert_eq!(cpu.reg_a, 0x05);
-    /// assert_eq!(cpu.status, Status::BREAK);
-    /// ```
-    pub fn txa(&mut self, _mode: AddressingMode) {
-        self.reg_a = self.reg_x;
-        self.zero_and_neg_flags(self.reg_a);
-    }
-
-    /// Transfers the value in the X register to the stack pointer.
-    ///
-    /// # Examples
-    /// ```
-    /// # use pretty_assertions::assert_eq;
-    /// use fete::{cpu::Status, Cpu};
-    ///
-    /// let mut cpu = Cpu::new();
-    ///
-    /// // LDX #$05
-    /// // TXS
-    /// // BRK
-    /// cpu.load_and_run(&[0xA2, 0x05, 0x9A, 0x00]);
-    ///
-    /// assert_eq!(cpu.sp, 0x05);
-    /// ```
-    pub fn txs(&mut self, _mode: AddressingMode) {
-        self.sp = self.reg_x;
-    }
-
-    /// Transfers the value in the Y register to the accumulator, and sets the zero and negative flags.
-    ///
-    /// # Examples
-    /// ```
-    /// # use pretty_assertions::assert_eq;
-    /// use fete::{cpu::Status, Cpu};
-    ///
-    /// let mut cpu = Cpu::new();
-    ///
-    /// // LDY #$05
-    /// // TYA
-    /// // BRK
-    /// cpu.load_and_run(&[0xA0, 0x05, 0x98, 0x00]);
-    ///
-    /// assert_eq!(cpu.reg_a, 0x05);
-    /// assert_eq!(cpu.status, Status::BREAK);
-    /// ```
-    pub fn tya(&mut self, _mode: AddressingMode) {
-        self.reg_a = self.reg_y;
-        self.zero_and_neg_flags(self.reg_a);
-    }
-
-    /// Increments the X register, and sets the zero and negative flags.
-    ///
-    /// # Examples
-    /// ```
-    /// # use pretty_assertions::assert_eq;
-    /// use fete::{cpu::Status, Cpu};
-    ///
-    /// let mut cpu = Cpu::new();
-    ///
-    /// // LDX #$05
-    /// // INX
-    /// // BRK
-    /// cpu.load_and_run(&[0xA2, 0x05, 0xE8, 0x00]);
-    ///
-    /// assert_eq!(cpu.reg_x, 0x06);
-    /// assert_eq!(cpu.status, Status::BREAK);
-    /// ```
-    pub fn inx(&mut self, _mode: AddressingMode) {
-        self.reg_x += 1;
-        self.zero_and_neg_flags(self.reg_x);
-    }
-
-    /// Increments the Y register, and sets the zero and negative flags.
-    ///
-    /// # Examples
-    /// ```
-    /// # use pretty_assertions::assert_eq;
-    /// use fete::{cpu::Status, Cpu};
-    ///
-    /// let mut cpu = Cpu::new();
-    ///
-    /// // LDY #$05
-    /// // INY
-    /// // BRK
-    /// cpu.load_and_run(&[0xA0, 0x05, 0xC8, 0x00]);
-    ///
-    /// assert_eq!(cpu.reg_y, 0x06);
-    /// assert_eq!(cpu.status, Status::BREAK);
-    /// ```
-    pub fn iny(&mut self, _mode: AddressingMode) {
-        self.reg_y += 1;
-        self.zero_and_neg_flags(self.reg_y);
-    }
-
-    /// Breaks the program, and sets the break flag.
-    ///
-    /// # Examples
-    /// ```
-    /// # use pretty_assertions::assert_eq;
-    /// use fete::{cpu::Status, Cpu};
-    ///
-    /// let mut cpu = Cpu::new();
-    /// cpu.load_and_run(&[0x00]);
-    ///
-    /// assert_eq!(cpu.status, Status::BREAK);
-    /// ```
-    pub fn brk(&mut self, _mode: AddressingMode) {
-        self.pc += 1;
-        self.status |= Status::BREAK;
-        // TODO: impl. stack + interrupts
     }
 
     /// Sets the zero and negative flags based on the given value.
@@ -474,13 +215,13 @@ impl Cpu {
         if val == 0 {
             self.status |= Status::ZERO;
         } else {
-            self.status = self.status.difference(Status::ZERO);
+            self.status &= !Status::ZERO;
         }
 
         if val & 0b1000_0000 == 0b1000_0000 {
             self.status |= Status::NEGATIVE;
         } else {
-            self.status = self.status.difference(Status::NEGATIVE);
+            self.status &= !Status::NEGATIVE;
         }
     }
 
@@ -537,5 +278,33 @@ impl Cpu {
         let [lo, hi] = val.to_le_bytes();
         self.mem_write(addr, lo);
         self.mem_write(addr + 1, hi);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn op_addr_immediate() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write(0x0000, 0x05);
+
+        assert_eq!(cpu.get_op_addr(AddressingMode::Immediate), 0x0000);
+        assert_eq!(cpu.pc, 0x0001);
+    }
+
+    #[test]
+    fn op_addr_zero_page() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write(0x0000, 0x05);
+        cpu.mem_write(0x0005, 0x06);
+
+        assert_eq!(cpu.get_op_addr(AddressingMode::ZeroPage), 0x0000);
+        assert_eq!(cpu.pc, 0x0001);
+
+        assert_eq!(cpu.get_op_addr(AddressingMode::ZeroPage), 0x0005);
+        assert_eq!(cpu.pc, 0x0002);
     }
 }
