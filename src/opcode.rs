@@ -447,6 +447,15 @@ pub fn asl(cpu: &mut Cpu, mode: AddressingMode) {
     }
 }
 
+// TODO: fix branch docs to use proper comparison instructions in examples
+
+fn branch_if(cpu: &mut Cpu, mode: AddressingMode, cond: bool) {
+    let addr = cpu.get_op_addr(mode);
+    if cond {
+        cpu.pc = addr;
+    }
+}
+
 /// Branches to the given address if the carry flag is clear.
 ///
 /// # Examples
@@ -456,19 +465,75 @@ pub fn asl(cpu: &mut Cpu, mode: AddressingMode) {
 ///
 /// let mut cpu = Cpu::new();
 ///
-/// // BCC *+2
+/// // BCC
 /// // BRK
 /// cpu.load_and_run(&[0x90, 0x02, 0x00]);
 ///
-/// assert_eq!(cpu.pc, 0x8003);
+/// assert_eq!(cpu.pc, 0x8006);
 /// ```
 pub fn bcc(cpu: &mut Cpu, mode: AddressingMode) {
-    let addr = cpu.get_op_addr(mode); // this HAS to be here, otherwise the pc will not be incremented correctly
-    if !cpu.status.contains(Status::CARRY) {
-        cpu.pc = addr;
-    }
+    branch_if(cpu, mode, !cpu.status.contains(Status::CARRY));
 }
 
+/// Branches to the given address if the carry flag is set.
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::Cpu;
+///
+/// let mut cpu = Cpu::new();
+///
+/// // SEC
+/// // BCS $02
+/// // BRK
+/// cpu.load_and_run(&[0x38, 0xB0, 0x02, 0x00]);
+///
+/// assert_eq!(cpu.pc, 0x8007);
+/// ```
+pub fn bcs(cpu: &mut Cpu, mode: AddressingMode) {
+    branch_if(cpu, mode, cpu.status.contains(Status::CARRY));
+}
+
+/// Branches to the given address if equal (zero flag is set).
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::Cpu;
+///
+/// let mut cpu = Cpu::new();
+///
+/// // LDA #$00
+/// // BEQ $02
+/// // BRK
+/// cpu.load_and_run(&[0xA9, 0x00, 0xF0, 0x02, 0x00]);
+///
+/// assert_eq!(cpu.pc, 0x8008);
+/// ```
+pub fn beq(cpu: &mut Cpu, mode: AddressingMode) {
+    branch_if(cpu, mode, cpu.status.contains(Status::ZERO));
+}
+
+/// Branches to the given address if minus (negative flag set).
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::Cpu;
+///
+/// let mut cpu = Cpu::new();
+///
+/// // LDA #$80 ; 128
+/// // BMI $02
+/// // BRK
+/// cpu.load_and_run(&[0xA9, 0x80, 0x30, 0x02, 0x00]);
+///
+/// assert_eq!(cpu.pc, 0x8008);
+/// ```
+pub fn bmi(cpu: &mut Cpu, mode: AddressingMode) {
+    branch_if(cpu, mode, cpu.status.contains(Status::NEGATIVE));
+}
 /// Sets the carry flag.
 ///
 /// # Examples
@@ -555,15 +620,10 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
     0x8Cu8 => (sty, Absolute, 3, 4),
 
     0xAAu8 => (tax, NoneAddressing, 1, 2),
-
     0xA8u8 => (tay, NoneAddressing, 1, 2),
-
     0xBAu8 => (tsx, NoneAddressing, 1, 2),
-
     0x8Au8 => (txa, NoneAddressing, 1, 2),
-
     0x9Au8 => (txs, NoneAddressing, 1, 2),
-
     0x98u8 => (tya, NoneAddressing, 1, 2),
 
     0xE8u8 => (inx, NoneAddressing, 1, 2),
@@ -600,6 +660,9 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
     0x1Eu8 => (asl, AbsoluteX, 3, 7),
 
     0x90u8 => (bcc, Relative, 2, 2),
+    0xB0u8 => (bcs, Relative, 2, 2),
+    0xF0u8 => (beq, Relative, 2, 2),
+    0x30u8 => (bmi, Relative, 2, 2),
 
     0x38u8 => (sec, NoneAddressing, 1, 2),
 

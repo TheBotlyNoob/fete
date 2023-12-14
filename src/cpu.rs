@@ -184,7 +184,7 @@ impl Cpu {
             }
             AddressingMode::Relative => {
                 let offset = self.take(); // self.pc + 1
-                self.pc.wrapping_add(offset as u16)
+                self.pc.wrapping_add(u16::from(offset))
             }
             AddressingMode::NoneAddressing => {
                 log::warn!("AddressingMode::NoneAddressing is not a valid addressing mode");
@@ -237,7 +237,7 @@ impl Cpu {
             self.status &= !Status::ZERO;
         }
 
-        if val & 0b1000_0000 == 0b1000_0000 {
+        if val & 0b1000_0000 != 0 {
             self.status |= Status::NEGATIVE;
         } else {
             self.status &= !Status::NEGATIVE;
