@@ -498,24 +498,25 @@ pub fn bcs(cpu: &mut Cpu, mode: AddressingMode) {
 /// Branches to the given address if equal (zero flag is set).
 ///
 /// # Examples
-/// ```ignore
+/// ```
 /// # use pretty_assertions::assert_eq;
 /// use fete::Cpu;
 ///
 /// let mut cpu = Cpu::new();
 ///
-/// // LDA #$00
+/// // LDA #$05
+/// // CMP #$05
 /// // BEQ $02
 /// // BRK
-/// cpu.load_and_run(&[0xA9, 0x00, 0xF0, 0x02, 0x00]);
+/// cpu.load_and_run(&[0xA9, 0x05, 0xC9, 0x05, 0xF0, 0x02, 0x00]);
 ///
-/// assert_eq!(cpu.pc, 0x8008);
+/// assert_eq!(cpu.pc, 0x800A);
 /// ```
 pub fn beq(cpu: &mut Cpu, mode: AddressingMode) {
     branch_if(cpu, mode, cpu.status.contains(Status::ZERO));
 }
 
-/// Branches to the given address if not equal (zero flag is not set).
+/// Branches to the given address if not equal (zero flag is clear).
 ///
 /// # Examples
 /// ```ignore
@@ -555,7 +556,7 @@ pub fn bmi(cpu: &mut Cpu, mode: AddressingMode) {
     branch_if(cpu, mode, cpu.status.contains(Status::NEGATIVE));
 }
 
-/// Branches to the given address if positive (negative flag not set).
+/// Branches to the given address if positive (negative flag clear).
 ///
 /// # Examples
 /// ```ignore
@@ -575,7 +576,7 @@ pub fn bpl(cpu: &mut Cpu, mode: AddressingMode) {
     branch_if(cpu, mode, !cpu.status.contains(Status::NEGATIVE));
 }
 
-/// Branches to the given address if minus (negative flag set).
+/// Branches to the given address if the overflow flag is set.
 ///
 /// # Examples
 /// ```ignore
@@ -595,6 +596,26 @@ pub fn bvs(cpu: &mut Cpu, mode: AddressingMode) {
     branch_if(cpu, mode, cpu.status.contains(Status::OVERFLOW));
 }
 
+/// Branches to the given address if the overflow flag is clear.
+///
+/// # Examples
+/// ```ignore
+/// # use pretty_assertions::assert_eq;
+/// use fete::Cpu;
+///
+/// let mut cpu = Cpu::new();
+///
+/// // clear overflow flag
+/// // BMI $02
+/// // BRK
+/// cpu.load_and_run(&[0x50, 0x02, 0x00]);
+///
+/// assert_eq!(cpu.pc, 0x8006);
+/// ```
+pub fn bvc(cpu: &mut Cpu, mode: AddressingMode) {
+    branch_if(cpu, mode, !cpu.status.contains(Status::OVERFLOW));
+}
+
 /// Sets the carry flag.
 ///
 /// # Examples
@@ -612,6 +633,176 @@ pub fn bvs(cpu: &mut Cpu, mode: AddressingMode) {
 /// ```
 pub fn sec(cpu: &mut Cpu, _mode: AddressingMode) {
     cpu.status |= Status::CARRY;
+}
+
+/// Clears the carry flag.
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::{cpu::Status, Cpu};
+///
+/// let mut cpu = Cpu::new();
+///
+/// // SEC
+/// // CLC
+/// // BRK
+/// cpu.load_and_run(&[0x38, 0x18, 0x00]);
+///
+/// assert_eq!(cpu.status, Status::BREAK);
+/// ```
+pub fn clc(cpu: &mut Cpu, _mode: AddressingMode) {
+    cpu.status &= !Status::CARRY;
+}
+
+/// Sets the decimal mode flag.
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::{cpu::Status, Cpu};
+///
+/// let mut cpu = Cpu::new();
+///
+/// // SED
+/// // BRK
+/// cpu.load_and_run(&[0xF8, 0x00]);
+///
+/// assert_eq!(cpu.status, Status::DECIMAL_MODE | Status::BREAK);
+/// ```
+pub fn sed(cpu: &mut Cpu, _mode: AddressingMode) {
+    cpu.status |= Status::DECIMAL_MODE;
+}
+
+/// Clears the decimal mode flag.
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::{cpu::Status, Cpu};
+///
+/// let mut cpu = Cpu::new();
+///
+/// // SED
+/// // CLD
+/// // BRK
+/// cpu.load_and_run(&[0xF8, 0xD8, 0x00]);
+///
+/// assert_eq!(cpu.status, Status::BREAK);
+/// ```
+pub fn cld(cpu: &mut Cpu, _mode: AddressingMode) {
+    cpu.status &= !Status::DECIMAL_MODE;
+}
+
+/// Sets the interrupt disable flag.
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::{cpu::Status, Cpu};
+///
+/// let mut cpu = Cpu::new();
+///
+/// // SEI
+/// // BRK
+/// cpu.load_and_run(&[0x78, 0x00]);
+///
+/// assert_eq!(cpu.status, Status::INTERRUPT_DISABLE | Status::BREAK);
+/// ```
+pub fn sei(cpu: &mut Cpu, _mode: AddressingMode) {
+    cpu.status |= Status::INTERRUPT_DISABLE;
+}
+
+/// Clears the interrupt disable flag.
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::{cpu::Status, Cpu};
+///
+/// let mut cpu = Cpu::new();
+///
+/// // SEI
+/// // CLI
+/// // BRK
+/// cpu.load_and_run(&[0x78, 0x58, 0x00]);
+///
+/// assert_eq!(cpu.status, Status::BREAK);
+/// ```
+pub fn cli(cpu: &mut Cpu, _mode: AddressingMode) {
+    cpu.status &= !Status::INTERRUPT_DISABLE;
+}
+
+/// Compares the value in the accumulator with the value at the given address, and sets the zero, negative, and carry flags.
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::{cpu::Status, Cpu};
+///
+/// let mut cpu = Cpu::new();
+///
+/// // LDA #$05
+/// // CMP #$05
+/// // BRK
+/// cpu.load_and_run(&[0xA9, 0x05, 0xC9, 0x05, 0x00]);
+///
+/// assert_eq!(cpu.status, Status::CARRY | Status::ZERO | Status::BREAK);
+/// ```
+pub fn cmp(cpu: &mut Cpu, mode: AddressingMode) {
+    let addr = cpu.get_op_addr(mode);
+    let val = cpu.mem_read(addr);
+
+    cpu.status.set(Status::CARRY, cpu.reg_a >= val);
+    cpu.zero_and_neg_flags(cpu.reg_a.wrapping_sub(val));
+}
+
+/// Compares the value in the X register with the value at the given address, and sets the zero, negative, and carry flags.
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::{cpu::Status, Cpu};
+///
+/// let mut cpu = Cpu::new();
+///
+/// // LDX #$05
+/// // CPX #$05
+/// // BRK
+/// cpu.load_and_run(&[0xA2, 0x05, 0xE0, 0x05, 0x00]);
+///
+/// assert_eq!(cpu.status, Status::CARRY | Status::ZERO | Status::BREAK);
+/// ```
+pub fn cpx(cpu: &mut Cpu, mode: AddressingMode) {
+    let addr = cpu.get_op_addr(mode);
+    let val = cpu.mem_read(addr);
+
+    cpu.status.set(Status::CARRY, cpu.reg_x >= val);
+    cpu.zero_and_neg_flags(cpu.reg_x.wrapping_sub(val));
+}
+
+/// Compares the value in the Y register with the value at the given address, and sets the zero, negative, and carry flags.
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::{cpu::Status, Cpu};
+///
+/// let mut cpu = Cpu::new();
+///
+/// // LDY #$05
+/// // CPY #$05
+/// // BRK
+/// cpu.load_and_run(&[0xA0, 0x05, 0xC0, 0x05, 0x00]);
+///
+/// assert_eq!(cpu.status, Status::CARRY | Status::ZERO | Status::BREAK);
+/// ```
+pub fn cpy(cpu: &mut Cpu, mode: AddressingMode) {
+    let addr = cpu.get_op_addr(mode);
+    let val = cpu.mem_read(addr);
+
+    cpu.status.set(Status::CARRY, cpu.reg_y >= val);
+    cpu.zero_and_neg_flags(cpu.reg_y.wrapping_sub(val));
 }
 
 /// Breaks the program, and sets the break flag.
@@ -729,7 +920,34 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
     0x30u8 => (bmi, Relative, 2, 2),
     0x10u8 => (bpl, Relative, 2, 2),
 
+    0x50u8 => (bvc, Relative, 2, 2),
+    0x70u8 => (bvs, Relative, 2, 2),
+
     0x38u8 => (sec, NoneAddressing, 1, 2),
+    0x18u8 => (clc, NoneAddressing, 1, 2),
+
+    0xF8u8 => (sed, NoneAddressing, 1, 2),
+    0xD8u8 => (cld, NoneAddressing, 1, 2),
+
+    0x78u8 => (sei, NoneAddressing, 1, 2),
+    0x58u8 => (cli, NoneAddressing, 1, 2),
+
+    0xC9u8 => (cmp, Immediate, 2, 2),
+    0xC5u8 => (cmp, ZeroPage, 2, 3),
+    0xD5u8 => (cmp, ZeroPageX, 2, 4),
+    0xCDu8 => (cmp, Absolute, 3, 4),
+    0xDDu8 => (cmp, AbsoluteX, 3, 4),
+    0xD9u8 => (cmp, AbsoluteY, 3, 4),
+    0xC1u8 => (cmp, IndirectX, 2, 6),
+    0xD1u8 => (cmp, IndirectY, 2, 5),
+
+    0xE0u8 => (cpx, Immediate, 2, 2),
+    0xE4u8 => (cpx, ZeroPage, 2, 3),
+    0xECu8 => (cpx, Absolute, 3, 4),
+
+    0xC0u8 => (cpy, Immediate, 2, 2),
+    0xC4u8 => (cpy, ZeroPage, 2, 3),
+    0xCCu8 => (cpy, Absolute, 3, 4),
 
     0x00u8 => (brk, NoneAddressing, 1, 7),
 };
