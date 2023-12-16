@@ -22,5 +22,5 @@ const EXAMPLE_PROGRAM: &[u8] = &[
 ];
 
 fn main() {
-    fete::cpu::Cpu::new().load_and_run(EXAMPLE_PROGRAM);
+    fete::cpu::Cpu::new().load_and_run(EXAMPLE_PROGRAM).unwrap();
 }

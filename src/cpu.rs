@@ -1,4 +1,11 @@
 use bitflags::bitflags;
+use snafu::prelude::*;
+
+#[derive(Debug, Snafu)]
+pub enum Error {
+    #[snafu(display("invalid opcode: {:#02x}", opcode))]
+    InvalidOpcode { opcode: u8, offset: u16 },
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AddressingMode {
@@ -187,8 +194,7 @@ impl Cpu {
                 self.pc.wrapping_add(u16::from(offset))
             }
             AddressingMode::NoneAddressing => {
-                log::warn!("AddressingMode::NoneAddressing is not a valid addressing mode");
-                0x0000
+                unreachable!("AddressingMode::NoneAddressing is not a valid addressing mode");
             }
         }
     }
@@ -200,10 +206,13 @@ impl Cpu {
     }
 
     /// Loads the given program into memory, resets the CPU, and runs the program.
-    pub fn load_and_run(&mut self, prog: &[u8]) {
+    ///
+    /// # Errors
+    /// Returns an [`Error::InvalidOpcode`] if an invalid opcode is encountered.
+    pub fn load_and_run(&mut self, prog: &[u8]) -> Result<(), Error> {
         self.load(prog);
         self.reset();
-        self.run();
+        self.run()
     }
 
     /// Sets the accumulator register, and sets the zero and negative flags.
@@ -217,7 +226,7 @@ impl Cpu {
     /// # Examples
     /// ```
     /// # use pretty_assertions::assert_eq;
-    /// use fete::{cpu::Status, Cpu};
+    /// use fete::cpu::{Cpu, Status};
     ///
     /// let mut cpu = Cpu::new();
     ///
@@ -245,7 +254,10 @@ impl Cpu {
     }
 
     /// Runs the program currently loaded into memory.
-    pub fn run(&mut self) {
+    ///
+    /// # Errors
+    /// Returns an [`Error::InvalidOpcode`] if an invalid opcode is encountered.
+    pub fn run(&mut self) -> Result<(), Error> {
         loop {
             let opcode = self.take();
             let opcode_info = crate::opcode::OPCODES.get(&opcode);
@@ -253,12 +265,14 @@ impl Cpu {
             if let Some(opcode) = opcode_info {
                 (opcode.op)(self, opcode.mode);
             } else {
-                todo!("opcode {opcode:#02x} not found")
+                return Err(Error::InvalidOpcode {
+                    opcode,
+                    offset: self.pc,
+                });
             }
 
             if self.status.contains(Status::BREAK) {
-                log::info!("break");
-                break;
+                break Ok(());
             }
         }
     }
@@ -278,21 +292,25 @@ impl Cpu {
 
     #[must_use]
     /// Reads a byte from memory, _without_ incrementing the program counter.
-    pub const fn mem_read(&self, addr: u16) -> u8 {
-        self.mem[addr as usize]
+    pub fn mem_read(&self, addr: u16) -> u8 {
+        // SAFETY: `addr` is always in bounds, as the maximum value of `u16` is 0xFFFF.
+        unsafe { *self.mem.get_unchecked(addr as usize) }
     }
+
     /// Writes a byte to memory.
     pub fn mem_write(&mut self, addr: u16, val: u8) {
-        self.mem[addr as usize] = val;
+        // SAFETY: `addr` is always in bounds, as the maximum value of `u16` is 0xFFFF.
+        unsafe { *self.mem.get_unchecked_mut(addr as usize) = val };
     }
 
     #[must_use]
     /// Reads a little-endian, 16-bit number from memory, _without_ incrementing the program counter.
-    pub const fn mem_read_u16(&self, addr: u16) -> u16 {
+    pub fn mem_read_u16(&self, addr: u16) -> u16 {
         let lo = self.mem_read(addr);
         let hi = self.mem_read(addr + 1);
         u16::from_le_bytes([lo, hi])
     }
+
     /// Writes a little-endian, 16-bit number to memory.
     pub fn mem_write_u16(&mut self, addr: u16, val: u16) {
         let [lo, hi] = val.to_le_bytes();
@@ -416,9 +434,10 @@ mod test {
     }
 
     #[test]
+    #[should_panic = "NoneAddressing is not a valid addressing mode"]
     fn op_addr_none_addressing() {
         let mut cpu = Cpu::new();
 
-        assert_eq!(cpu.get_op_addr(AddressingMode::NoneAddressing), 0x0000);
+        cpu.get_op_addr(AddressingMode::NoneAddressing);
     }
 }
