@@ -8,7 +8,7 @@ use crate::cpu::{AddressingMode, Cpu, Status};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// let mut cpu = Cpu::new();
-/// cpu.load_and_run(&[0x00]);
+/// cpu.load_and_run(&[0x00]).unwrap();
 ///
 /// assert_eq!(cpu.status, Status::BREAK);
 /// ```
@@ -29,7 +29,7 @@ pub fn brk(cpu: &mut Cpu, _mode: AddressingMode) {
 ///
 /// // NOP
 /// // BRK
-/// cpu.load_and_run(&[0xEA, 0x00]); // there's really nothing to test here...
+/// cpu.load_and_run(&[0xEA, 0x00]).unwrap(); // there's really nothing to test here...
 /// ```
 pub fn nop(_cpu: &mut Cpu, _mode: AddressingMode) {
     // do nothing

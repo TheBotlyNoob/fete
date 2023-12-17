@@ -12,7 +12,7 @@ use crate::cpu::{AddressingMode, Cpu};
 /// // LDX #$05
 /// // INX
 /// // BRK
-/// cpu.load_and_run(&[0xA2, 0x05, 0xE8, 0x00]);
+/// cpu.load_and_run(&[0xA2, 0x05, 0xE8, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.reg_x, 0x06);
 /// assert_eq!(cpu.status, Status::BREAK);
@@ -34,7 +34,7 @@ pub fn inx(cpu: &mut Cpu, _mode: AddressingMode) {
 /// // LDY #$05
 /// // INY
 /// // BRK
-/// cpu.load_and_run(&[0xA0, 0x05, 0xC8, 0x00]);
+/// cpu.load_and_run(&[0xA0, 0x05, 0xC8, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.reg_y, 0x06);
 /// assert_eq!(cpu.status, Status::BREAK);
@@ -57,7 +57,8 @@ pub fn iny(cpu: &mut Cpu, _mode: AddressingMode) {
 /// // STA $8000
 /// // INC $8000
 /// // BRK
-/// cpu.load_and_run(&[0xA9, 0x05, 0x8D, 0x00, 0x80, 0xEE, 0x00, 0x80, 0x00]);
+/// cpu.load_and_run(&[0xA9, 0x05, 0x8D, 0x00, 0x80, 0xEE, 0x00, 0x80, 0x00])
+///     .unwrap();
 ///
 /// assert_eq!(cpu.mem_read(0x8000), 0x06);
 /// ```

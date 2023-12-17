@@ -246,7 +246,7 @@ impl Cpu {
             self.status &= !Status::ZERO;
         }
 
-        if val & 0b1000_0000 != 0 {
+        if val & (1 << 7) != 0 {
             self.status |= Status::NEGATIVE;
         } else {
             self.status &= !Status::NEGATIVE;

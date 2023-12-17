@@ -19,7 +19,7 @@ fn branch_if(cpu: &mut Cpu, mode: AddressingMode, cond: bool) {
 /// // CLC
 /// // BCC
 /// // BRK
-/// cpu.load_and_run(&[0x18, 0x90, 0x02, 0x00]);
+/// cpu.load_and_run(&[0x18, 0x90, 0x02, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.pc, 0x8007);
 /// ```
@@ -39,7 +39,7 @@ pub fn bcc(cpu: &mut Cpu, mode: AddressingMode) {
 /// // SEC
 /// // BCS $02
 /// // BRK
-/// cpu.load_and_run(&[0x38, 0xB0, 0x02, 0x00]);
+/// cpu.load_and_run(&[0x38, 0xB0, 0x02, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.pc, 0x8007);
 /// ```
@@ -59,7 +59,7 @@ pub fn bcs(cpu: &mut Cpu, mode: AddressingMode) {
 /// // LDA #$00
 /// // BEQ $02
 /// // BRK
-/// cpu.load_and_run(&[0xA9, 0x00, 0xF0, 0x02, 0x00]);
+/// cpu.load_and_run(&[0xA9, 0x00, 0xF0, 0x02, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.pc, 0x8008);
 /// ```
@@ -79,7 +79,7 @@ pub fn beq(cpu: &mut Cpu, mode: AddressingMode) {
 /// // LDA #$01
 /// // BNE $02
 /// // BRK
-/// cpu.load_and_run(&[0xA9, 0x01, 0xD0, 0x02, 0x00]);
+/// cpu.load_and_run(&[0xA9, 0x01, 0xD0, 0x02, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.pc, 0x8008);
 /// ```
@@ -99,7 +99,7 @@ pub fn bne(cpu: &mut Cpu, mode: AddressingMode) {
 /// // LDA #$80 ; 0x80 is -128
 /// // BMI $02
 /// // BRK
-/// cpu.load_and_run(&[0xA9, 0x80, 0x30, 0x02, 0x00]);
+/// cpu.load_and_run(&[0xA9, 0x80, 0x30, 0x02, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.pc, 0x8008);
 /// ```
@@ -119,7 +119,7 @@ pub fn bmi(cpu: &mut Cpu, mode: AddressingMode) {
 /// // LDA #$01
 /// // BMI $02
 /// // BRK
-/// cpu.load_and_run(&[0xA9, 0x01, 0x10, 0x02, 0x00]);
+/// cpu.load_and_run(&[0xA9, 0x01, 0x10, 0x02, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.pc, 0x8008);
 /// ```
@@ -130,18 +130,24 @@ pub fn bpl(cpu: &mut Cpu, mode: AddressingMode) {
 /// Increases the program counter by the given number of bytes if the overflow flag is set.
 ///
 /// # Examples
-/// ```ignore
+/// ```
 /// # use pretty_assertions::assert_eq;
 /// use fete::cpu::Cpu;
 ///
 /// let mut cpu = Cpu::new();
 ///
-/// // set overflow flag
+/// // LDA #$40
+/// // STA $80
+/// // LDA #$FF
+/// // BIT $80 ; sets the overflow flag
 /// // BMI $02
 /// // BRK
-/// cpu.load_and_run(&[0x70, 0x02, 0x00]);
+/// cpu.load_and_run(&[
+///     0xA9, 0x40, 0x85, 0x80, 0xA9, 0xFF, 0x24, 0x80, 0x70, 0x02, 0x00,
+/// ])
+/// .unwrap();
 ///
-/// assert_eq!(cpu.pc, 0x8006);
+/// assert_eq!(cpu.pc, 0x800E);
 /// ```
 pub fn bvs(cpu: &mut Cpu, mode: AddressingMode) {
     branch_if(cpu, mode, cpu.status.contains(Status::OVERFLOW));
@@ -159,7 +165,7 @@ pub fn bvs(cpu: &mut Cpu, mode: AddressingMode) {
 /// // CLV
 /// // BMI $02
 /// // BRK
-/// cpu.load_and_run(&[0xB8, 0x50, 0x02, 0x00]);
+/// cpu.load_and_run(&[0xB8, 0x50, 0x02, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.pc, 0x8007);
 /// ```

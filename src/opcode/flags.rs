@@ -11,7 +11,7 @@ use crate::cpu::{AddressingMode, Cpu, Status};
 ///
 /// // SEC
 /// // BRK
-/// cpu.load_and_run(&[0x38, 0x00]);
+/// cpu.load_and_run(&[0x38, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.status, Status::CARRY | Status::BREAK);
 /// ```
@@ -31,7 +31,7 @@ pub fn sec(cpu: &mut Cpu, _mode: AddressingMode) {
 /// // SEC
 /// // CLC
 /// // BRK
-/// cpu.load_and_run(&[0x38, 0x18, 0x00]);
+/// cpu.load_and_run(&[0x38, 0x18, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.status, Status::BREAK);
 /// ```
@@ -50,7 +50,7 @@ pub fn clc(cpu: &mut Cpu, _mode: AddressingMode) {
 ///
 /// // SED
 /// // BRK
-/// cpu.load_and_run(&[0xF8, 0x00]);
+/// cpu.load_and_run(&[0xF8, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.status, Status::DECIMAL_MODE | Status::BREAK);
 /// ```
@@ -70,7 +70,7 @@ pub fn sed(cpu: &mut Cpu, _mode: AddressingMode) {
 /// // SED
 /// // CLD
 /// // BRK
-/// cpu.load_and_run(&[0xF8, 0xD8, 0x00]);
+/// cpu.load_and_run(&[0xF8, 0xD8, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.status, Status::BREAK);
 /// ```
@@ -89,7 +89,7 @@ pub fn cld(cpu: &mut Cpu, _mode: AddressingMode) {
 ///
 /// // SEI
 /// // BRK
-/// cpu.load_and_run(&[0x78, 0x00]);
+/// cpu.load_and_run(&[0x78, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.status, Status::INTERRUPT_DISABLE | Status::BREAK);
 /// ```
@@ -109,7 +109,7 @@ pub fn sei(cpu: &mut Cpu, _mode: AddressingMode) {
 /// // SEI
 /// // CLI
 /// // BRK
-/// cpu.load_and_run(&[0x78, 0x58, 0x00]);
+/// cpu.load_and_run(&[0x78, 0x58, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.status, Status::BREAK);
 /// ```
@@ -120,16 +120,22 @@ pub fn cli(cpu: &mut Cpu, _mode: AddressingMode) {
 /// Clears the overflow flag.
 ///
 /// # Examples
-/// ```ignore
+/// ```
 /// # use pretty_assertions::assert_eq;
 /// use fete::cpu::{Cpu, Status};
 ///
 /// let mut cpu = Cpu::new();
 ///
-/// // TODO: set overflow flag
+/// // LDA #$40
+/// // STA $80
+/// // LDA #$FF
+/// // BIT $80 ; sets the overflow flag
 /// // CLV
 /// // BRK
-/// cpu.load_and_run(&[0xB8, 0x00]);
+/// cpu.load_and_run(&[
+///     0xA9, 0x40, 0x8D, 0x80, 0x00, 0xA9, 0xFF, 0x24, 0x80, 0xB8, 0x00,
+/// ])
+/// .unwrap();
 ///
 /// assert_eq!(cpu.status, Status::BREAK);
 /// ```

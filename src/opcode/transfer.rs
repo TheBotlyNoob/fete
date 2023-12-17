@@ -12,7 +12,7 @@ use crate::cpu::{AddressingMode, Cpu};
 /// // LDA #$05
 /// // TAX
 /// // BRK
-/// cpu.load_and_run(&[0xA9, 0x05, 0xAA, 0x00]);
+/// cpu.load_and_run(&[0xA9, 0x05, 0xAA, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.reg_x, 0x05);
 /// assert_eq!(cpu.status, Status::BREAK);
@@ -34,7 +34,7 @@ pub fn tax(cpu: &mut Cpu, _mode: AddressingMode) {
 /// // LDA #$05
 /// // TAY
 /// // BRK
-/// cpu.load_and_run(&[0xA9, 0x05, 0xA8, 0x00]);
+/// cpu.load_and_run(&[0xA9, 0x05, 0xA8, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.reg_y, 0x05);
 /// assert_eq!(cpu.status, Status::BREAK);
@@ -57,7 +57,7 @@ pub fn tay(cpu: &mut Cpu, _mode: AddressingMode) {
 /// // TXS
 /// // TSX
 /// // BRK
-/// cpu.load_and_run(&[0xA2, 0x05, 0x9A, 0xBA, 0x00]);
+/// cpu.load_and_run(&[0xA2, 0x05, 0x9A, 0xBA, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.reg_x, 0x05);
 /// assert_eq!(cpu.status, Status::BREAK);
@@ -79,7 +79,7 @@ pub fn tsx(cpu: &mut Cpu, _mode: AddressingMode) {
 /// // LDX #$05
 /// // TXA
 /// // BRK
-/// cpu.load_and_run(&[0xA2, 0x05, 0x8A, 0x00]);
+/// cpu.load_and_run(&[0xA2, 0x05, 0x8A, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.reg_a, 0x05);
 /// assert_eq!(cpu.status, Status::BREAK);
@@ -100,7 +100,7 @@ pub fn txa(cpu: &mut Cpu, _mode: AddressingMode) {
 /// // LDX #$05
 /// // TXS
 /// // BRK
-/// cpu.load_and_run(&[0xA2, 0x05, 0x9A, 0x00]);
+/// cpu.load_and_run(&[0xA2, 0x05, 0x9A, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.sp, 0x05);
 /// ```
@@ -120,7 +120,7 @@ pub fn txs(cpu: &mut Cpu, _mode: AddressingMode) {
 /// // LDY #$05
 /// // TYA
 /// // BRK
-/// cpu.load_and_run(&[0xA0, 0x05, 0x98, 0x00]);
+/// cpu.load_and_run(&[0xA0, 0x05, 0x98, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.reg_a, 0x05);
 /// assert_eq!(cpu.status, Status::BREAK);

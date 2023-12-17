@@ -12,7 +12,7 @@ use crate::cpu::{AddressingMode, Cpu, Status};
 /// // LDA #$05
 /// // CMP #$05
 /// // BRK
-/// cpu.load_and_run(&[0xA9, 0x05, 0xC9, 0x05, 0x00]);
+/// cpu.load_and_run(&[0xA9, 0x05, 0xC9, 0x05, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.status, Status::CARRY | Status::ZERO | Status::BREAK);
 /// ```
@@ -36,7 +36,7 @@ pub fn cmp(cpu: &mut Cpu, mode: AddressingMode) {
 /// // LDX #$05
 /// // CPX #$05
 /// // BRK
-/// cpu.load_and_run(&[0xA2, 0x05, 0xE0, 0x05, 0x00]);
+/// cpu.load_and_run(&[0xA2, 0x05, 0xE0, 0x05, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.status, Status::CARRY | Status::ZERO | Status::BREAK);
 /// ```
@@ -60,7 +60,7 @@ pub fn cpx(cpu: &mut Cpu, mode: AddressingMode) {
 /// // LDY #$05
 /// // CPY #$05
 /// // BRK
-/// cpu.load_and_run(&[0xA0, 0x05, 0xC0, 0x05, 0x00]);
+/// cpu.load_and_run(&[0xA0, 0x05, 0xC0, 0x05, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.status, Status::CARRY | Status::ZERO | Status::BREAK);
 /// ```

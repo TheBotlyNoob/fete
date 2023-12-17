@@ -117,6 +117,15 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
     0x61u8 => (arrith::adc, IndirectX, 2, 6),
     0x71u8 => (arrith::adc, IndirectY, 2, 5),
 
+    0xE9u8 => (arrith::sbc, Immediate, 2, 2),
+    0xE5u8 => (arrith::sbc, ZeroPage, 2, 3),
+    0xF5u8 => (arrith::sbc, ZeroPageX, 2, 4),
+    0xEDu8 => (arrith::sbc, Absolute, 3, 4),
+    0xFDu8 => (arrith::sbc, AbsoluteX, 3, 4),
+    0xF9u8 => (arrith::sbc, AbsoluteY, 3, 4),
+    0xE1u8 => (arrith::sbc, IndirectX, 2, 6),
+    0xF1u8 => (arrith::sbc, IndirectY, 2, 5),
+
     0x29u8 => (logic::and, Immediate, 2, 2),
     0x25u8 => (logic::and, ZeroPage, 2, 3),
     0x35u8 => (logic::and, ZeroPageX, 2, 4),
@@ -125,6 +134,9 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
     0x39u8 => (logic::and, AbsoluteY, 3, 4),
     0x21u8 => (logic::and, IndirectX, 2, 6),
     0x31u8 => (logic::and, IndirectY, 2, 5),
+
+    0x24u8 => (logic::bit, ZeroPage, 2, 3),
+    0x2Cu8 => (logic::bit, Absolute, 3, 4),
 
     0x0Au8 => (shift::asl, NoneAddressing, 1, 2),
     0x06u8 => (shift::asl, ZeroPage, 2, 5),

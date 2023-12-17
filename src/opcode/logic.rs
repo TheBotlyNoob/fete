@@ -12,7 +12,7 @@ use crate::cpu::{AddressingMode, Cpu, Status};
 /// // LDA #$05
 /// // AND #$05
 /// // BRK
-/// cpu.load_and_run(&[0xA9, 0x05, 0x29, 0x05, 0x00]);
+/// cpu.load_and_run(&[0xA9, 0x05, 0x29, 0x05, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.reg_a, 0x05);
 /// ```
@@ -27,20 +27,23 @@ pub fn and(cpu: &mut Cpu, mode: AddressingMode) {
 /// Bits 7 and 6 of the value in memory are copied into the negative and overflow flags, respectively.
 ///
 /// # Examples
-/// ```ignore
+/// ```
 /// # use pretty_assertions::assert_eq;
 /// use fete::cpu::{Cpu, Status};
 ///
 /// let mut cpu = Cpu::new();
 ///
 /// // LDA #$C0
-/// // BIT #$C0
+/// // STA $80
+/// // LDA #$3F
+/// // BIT $80
 /// // BRK
-/// cpu.load_and_run(&[0xA9, 0x05, 0x24, 0x05, 0x00]);
+/// cpu.load_and_run(&[0xA9, 0xC0, 0x85, 0x80, 0xA9, 0xFF, 0x24, 0x80, 0x00])
+///     .unwrap();
 ///
 /// assert_eq!(
 ///     cpu.status,
-///     Status::NEGATIVE | Status::OVERFLOW | Status::ZERO | Status::BREAK
+///     Status::NEGATIVE | Status::OVERFLOW | Status::BREAK
 /// );
 /// ```
 pub fn bit(cpu: &mut Cpu, mode: AddressingMode) {
@@ -48,6 +51,6 @@ pub fn bit(cpu: &mut Cpu, mode: AddressingMode) {
     let val = cpu.mem_read(addr);
 
     cpu.status.set(Status::ZERO, cpu.reg_a & val == 0);
-    cpu.status.set(Status::NEGATIVE, val & 0x80 != 0);
-    cpu.status.set(Status::OVERFLOW, val & 0x40 != 0);
+    cpu.status.set(Status::NEGATIVE, val & (1 << 7) != 0);
+    cpu.status.set(Status::OVERFLOW, val & (1 << 6) != 0);
 }

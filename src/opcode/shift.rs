@@ -13,7 +13,7 @@ use crate::cpu::{AddressingMode, Cpu, Status};
 /// // LDA #$05
 /// // ASL A
 /// // BRK
-/// cpu.load_and_run(&[0xA9, 0x05, 0x0A, 0x00]);
+/// cpu.load_and_run(&[0xA9, 0x05, 0x0A, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.reg_a, 0x05 << 1);
 /// assert_eq!(cpu.status, Status::BREAK);
@@ -28,7 +28,7 @@ pub fn asl(cpu: &mut Cpu, mode: AddressingMode) {
     };
 
     let new_val = val << 1;
-    cpu.status.set(Status::CARRY, val & 0x80 != 0);
+    cpu.status.set(Status::CARRY, val & (1 << 7) != 0);
     if accum {
         cpu.set_reg_a(new_val);
     } else {
