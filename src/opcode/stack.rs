@@ -65,6 +65,7 @@ pub fn pha(cpu: &mut Cpu, _mode: AddressingMode) {
 }
 
 /// Pushes the value in the status register onto the stack.
+/// The break flag is
 ///
 /// # Examples
 /// ```
@@ -78,7 +79,10 @@ pub fn pha(cpu: &mut Cpu, _mode: AddressingMode) {
 /// // BRK
 /// cpu.load_and_run(&[0x78, 0x08, 0x00]).unwrap();
 ///
-/// assert_eq!(cpu.mem_read(0x01FF), Status::INTERRUPT_DISABLE.bits());
+/// assert_eq!(
+///     cpu.mem_read(0x01FF),
+///     (Status::INTERRUPT_DISABLE | Status::BREAK | Status::BREAK2).bits()
+/// );
 /// assert_eq!(cpu.sp, 0xFE);
 /// ```
 pub fn php(cpu: &mut Cpu, _mode: AddressingMode) {

@@ -1,6 +1,8 @@
 use bitflags::bitflags;
 use snafu::prelude::*;
 
+const STACK: u16 = 0x1000;
+
 #[derive(Debug, Snafu)]
 pub enum Error {
     #[snafu(display("invalid opcode: {:#02x}", opcode))]
@@ -101,6 +103,18 @@ pub enum AddressingMode {
 
 bitflags! {
     /// Status register flags.
+    ///
+    /// ```ignore
+    ///  7 6 5 4 3 2 1 0
+    ///  N V _ B D I Z C
+    ///  | |   | | | | +--- Carry Flag
+    ///  | |   | | | +----- Zero Flag
+    ///  | |   | | +------- Interrupt Disable
+    ///  | |   | +--------- Decimal Mode (not used on NES)
+    ///  | |   +----------- Break Command
+    ///  | +--------------- Overflow Flag
+    ///  +----------------- Negative Flag
+    /// ```
     #[derive(Copy, Clone, Default, Debug, PartialEq, Eq)]
     pub struct Status: u8 {
         /// Carry flag.
@@ -113,8 +127,8 @@ bitflags! {
         const DECIMAL_MODE = 0b0000_1000;
         /// Break flag.
         const BREAK = 0b0001_0000;
-        /// Unused flag.
-        const UNUSED = 0b0010_0000;
+        /// Second break flag.
+        const BREAK2 = 0b0010_0000;
         /// Overflow flag.
         const OVERFLOW = 0b0100_0000;
         /// Negative flag.
@@ -279,7 +293,7 @@ impl Cpu {
 
     /// Pushes a byte onto the stack.
     pub fn push(&mut self, val: u8) {
-        self.mem_write(u16::from(self.sp), val);
+        self.mem_write(STACK + u16::from(self.sp), val);
         self.sp -= 1;
     }
 
