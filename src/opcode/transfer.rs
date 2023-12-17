@@ -44,29 +44,6 @@ pub fn tay(cpu: &mut Cpu, _mode: AddressingMode) {
     cpu.zero_and_neg_flags(cpu.reg_y);
 }
 
-/// Transfers the value in the stack pointer to the X register, and sets the zero and negative flags.
-///
-/// # Examples
-/// ```
-/// # use pretty_assertions::assert_eq;
-/// use fete::cpu::{Cpu, Status};
-///
-/// let mut cpu = Cpu::new();
-///
-/// // LDX #$05
-/// // TXS
-/// // TSX
-/// // BRK
-/// cpu.load_and_run(&[0xA2, 0x05, 0x9A, 0xBA, 0x00]).unwrap();
-///
-/// assert_eq!(cpu.reg_x, 0x05);
-/// assert_eq!(cpu.status, Status::BREAK);
-/// ```
-pub fn tsx(cpu: &mut Cpu, _mode: AddressingMode) {
-    cpu.reg_x = cpu.sp;
-    cpu.zero_and_neg_flags(cpu.reg_x);
-}
-
 /// Transfers the value in the X register to the accumulator, and sets the zero and negative flags.
 ///
 /// # Examples
@@ -86,26 +63,6 @@ pub fn tsx(cpu: &mut Cpu, _mode: AddressingMode) {
 /// ```
 pub fn txa(cpu: &mut Cpu, _mode: AddressingMode) {
     cpu.set_reg_a(cpu.reg_x);
-}
-
-/// Transfers the value in the X register to the stack pointer.
-///
-/// # Examples
-/// ```
-/// # use pretty_assertions::assert_eq;
-/// use fete::cpu::{Cpu, Status};
-///
-/// let mut cpu = Cpu::new();
-///
-/// // LDX #$05
-/// // TXS
-/// // BRK
-/// cpu.load_and_run(&[0xA2, 0x05, 0x9A, 0x00]).unwrap();
-///
-/// assert_eq!(cpu.sp, 0x05);
-/// ```
-pub fn txs(cpu: &mut Cpu, _mode: AddressingMode) {
-    cpu.sp = cpu.reg_x;
 }
 
 /// Transfers the value in the Y register to the accumulator, and sets the zero and negative flags.

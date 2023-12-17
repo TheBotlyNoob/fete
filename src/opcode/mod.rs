@@ -4,12 +4,12 @@ use crate::cpu::{AddressingMode, Cpu};
 
 pub mod arrith;
 pub mod branch;
-pub mod cmp;
 pub mod flags;
 pub mod inc_dec;
 pub mod load;
 pub mod logic;
 pub mod shift;
+pub mod stack;
 pub mod sys;
 pub mod transfer;
 
@@ -94,10 +94,13 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
 
     0xAAu8 => (transfer::tax, NoneAddressing, 1, 2),
     0xA8u8 => (transfer::tay, NoneAddressing, 1, 2),
-    0xBAu8 => (transfer::tsx, NoneAddressing, 1, 2),
     0x8Au8 => (transfer::txa, NoneAddressing, 1, 2),
-    0x9Au8 => (transfer::txs, NoneAddressing, 1, 2),
     0x98u8 => (transfer::tya, NoneAddressing, 1, 2),
+
+    0x9Au8 => (stack::txs, NoneAddressing, 1, 2),
+    0xBAu8 => (stack::tsx, NoneAddressing, 1, 2),
+    0x48u8 => (stack::pha, NoneAddressing, 1, 3),
+    0x08u8 => (stack::php, NoneAddressing, 1, 3),
 
     0xE8u8 => (inc_dec::inx, NoneAddressing, 1, 2),
 
@@ -125,6 +128,24 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
     0xF9u8 => (arrith::sbc, AbsoluteY, 3, 4),
     0xE1u8 => (arrith::sbc, IndirectX, 2, 6),
     0xF1u8 => (arrith::sbc, IndirectY, 2, 5),
+
+
+    0xC9u8 => (arrith::cmp, Immediate, 2, 2),
+    0xC5u8 => (arrith::cmp, ZeroPage, 2, 3),
+    0xD5u8 => (arrith::cmp, ZeroPageX, 2, 4),
+    0xCDu8 => (arrith::cmp, Absolute, 3, 4),
+    0xDDu8 => (arrith::cmp, AbsoluteX, 3, 4),
+    0xD9u8 => (arrith::cmp, AbsoluteY, 3, 4),
+    0xC1u8 => (arrith::cmp, IndirectX, 2, 6),
+    0xD1u8 => (arrith::cmp, IndirectY, 2, 5),
+
+    0xE0u8 => (arrith::cpx, Immediate, 2, 2),
+    0xE4u8 => (arrith::cpx, ZeroPage, 2, 3),
+    0xECu8 => (arrith::cpx, Absolute, 3, 4),
+
+    0xC0u8 => (arrith::cpy, Immediate, 2, 2),
+    0xC4u8 => (arrith::cpy, ZeroPage, 2, 3),
+    0xCCu8 => (arrith::cpy, Absolute, 3, 4),
 
     0x29u8 => (logic::and, Immediate, 2, 2),
     0x25u8 => (logic::and, ZeroPage, 2, 3),
@@ -167,22 +188,6 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
 
     0xB8u8 => (flags::clv, NoneAddressing, 1, 2),
 
-    0xC9u8 => (cmp::cmp, Immediate, 2, 2),
-    0xC5u8 => (cmp::cmp, ZeroPage, 2, 3),
-    0xD5u8 => (cmp::cmp, ZeroPageX, 2, 4),
-    0xCDu8 => (cmp::cmp, Absolute, 3, 4),
-    0xDDu8 => (cmp::cmp, AbsoluteX, 3, 4),
-    0xD9u8 => (cmp::cmp, AbsoluteY, 3, 4),
-    0xC1u8 => (cmp::cmp, IndirectX, 2, 6),
-    0xD1u8 => (cmp::cmp, IndirectY, 2, 5),
-
-    0xE0u8 => (cmp::cpx, Immediate, 2, 2),
-    0xE4u8 => (cmp::cpx, ZeroPage, 2, 3),
-    0xECu8 => (cmp::cpx, Absolute, 3, 4),
-
-    0xC0u8 => (cmp::cpy, Immediate, 2, 2),
-    0xC4u8 => (cmp::cpy, ZeroPage, 2, 3),
-    0xCCu8 => (cmp::cpy, Absolute, 3, 4),
 
     0xEAu8 => (sys::nop, NoneAddressing, 1, 2),
     0x00u8 => (sys::brk, NoneAddressing, 1, 7),

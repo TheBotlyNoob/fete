@@ -277,6 +277,12 @@ impl Cpu {
         }
     }
 
+    /// Pushes a byte onto the stack.
+    pub fn push(&mut self, val: u8) {
+        self.mem_write(u16::from(self.sp), val);
+        self.sp -= 1;
+    }
+
     /// Takes the next byte from memory, and increments the program counter.
     fn take(&mut self) -> u8 {
         let byte = self.mem_read(self.pc);
