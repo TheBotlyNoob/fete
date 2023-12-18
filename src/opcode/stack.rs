@@ -1,4 +1,4 @@
-use crate::cpu::{AddressingMode, Cpu};
+use crate::cpu::{AddressingMode, Cpu, Status};
 
 /// Transfers the value in the stack pointer to the X register, and sets the zero and negative flags.
 ///
@@ -64,8 +64,34 @@ pub fn pha(cpu: &mut Cpu, _mode: AddressingMode) {
     cpu.push(cpu.reg_a);
 }
 
+/// Pops the value on the stack into the accumulator, and sets the zero and negative flags.
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::cpu::{Cpu, Status};
+///
+/// let mut cpu = Cpu::new();
+///
+/// // LDA #$05
+/// // PHA
+/// // LDA #$06
+/// // PLA
+/// // BRK
+/// cpu.load_and_run(&[0xA9, 0x05, 0x48, 0xA9, 0x06, 0x68, 0x00])
+///     .unwrap();
+///
+/// assert_eq!(cpu.reg_a, 0x05);
+/// assert_eq!(cpu.sp, 0xFF);
+/// assert_eq!(cpu.status, Status::BREAK);
+/// ```
+pub fn pla(cpu: &mut Cpu, _mode: AddressingMode) {
+    let val = cpu.pop();
+    cpu.set_reg_a(val);
+}
+
 /// Pushes the value in the status register onto the stack.
-/// The break flag is
+/// The [`Status::BREAK`] and [`Status::UNUSED`] flags will be added to the status on the stack.
 ///
 /// # Examples
 /// ```
@@ -81,10 +107,37 @@ pub fn pha(cpu: &mut Cpu, _mode: AddressingMode) {
 ///
 /// assert_eq!(
 ///     cpu.mem_read(0x01FF),
-///     (Status::INTERRUPT_DISABLE | Status::BREAK | Status::BREAK2).bits()
+///     (Status::INTERRUPT_DISABLE | Status::BREAK | Status::UNUSED).bits()
 /// );
 /// assert_eq!(cpu.sp, 0xFE);
 /// ```
 pub fn php(cpu: &mut Cpu, _mode: AddressingMode) {
-    cpu.push(cpu.status.bits());
+    cpu.push((cpu.status | Status::BREAK | Status::UNUSED).bits());
+}
+
+/// Pops the value on the stack into the status register.
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::cpu::{Cpu, Status};
+///
+/// let mut cpu = Cpu::new();
+///
+/// // SEI
+/// // PHP
+/// // CLI
+/// // PLP
+/// // BRK
+/// cpu.load_and_run(&[0x78, 0x08, 0x58, 0x28, 0x00]).unwrap();
+///
+/// assert_eq!(
+///     cpu.status,
+///     Status::INTERRUPT_DISABLE | Status::BREAK | Status::UNUSED
+/// );
+/// assert_eq!(cpu.sp, 0xFF);
+/// ```
+pub fn plp(cpu: &mut Cpu, _mode: AddressingMode) {
+    let val = cpu.pop();
+    cpu.status = Status::from_bits_truncate(val);
 }

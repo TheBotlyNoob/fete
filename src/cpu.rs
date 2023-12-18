@@ -1,7 +1,7 @@
 use bitflags::bitflags;
 use snafu::prelude::*;
 
-const STACK: u16 = 0x1000;
+const STACK: u16 = 0x0100;
 
 #[derive(Debug, Snafu)]
 pub enum Error {
@@ -118,21 +118,21 @@ bitflags! {
     #[derive(Copy, Clone, Default, Debug, PartialEq, Eq)]
     pub struct Status: u8 {
         /// Carry flag.
-        const CARRY = 0b0000_0001;
+        const CARRY = 1;
         /// Zero flag.
-        const ZERO = 0b0000_0010;
+        const ZERO = 1 << 1;
         /// Interrupt disable flag.
-        const INTERRUPT_DISABLE = 0b0000_0100;
+        const INTERRUPT_DISABLE = 1 << 2;
         /// Decimal mode flag.
-        const DECIMAL_MODE = 0b0000_1000;
+        const DECIMAL_MODE = 1 << 3;
         /// Break flag.
-        const BREAK = 0b0001_0000;
-        /// Second break flag.
-        const BREAK2 = 0b0010_0000;
+        const BREAK = 1 << 4;
+        /// Unused flag.
+        const UNUSED = 1 << 5;
         /// Overflow flag.
-        const OVERFLOW = 0b0100_0000;
+        const OVERFLOW = 1 << 6;
         /// Negative flag.
-        const NEGATIVE = 0b1000_0000;
+        const NEGATIVE = 1 << 7;
     }
 }
 
@@ -153,7 +153,7 @@ impl Default for Cpu {
             reg_x: 0,
             reg_y: 0,
             status: Status::default(),
-            sp: 0xFD,
+            sp: 0xFF,
             pc: 0,
             mem: [0; 0xFFFF],
         }
@@ -293,8 +293,14 @@ impl Cpu {
 
     /// Pushes a byte onto the stack.
     pub fn push(&mut self, val: u8) {
-        self.mem_write(STACK + u16::from(self.sp), val);
+        self.mem_write(STACK.saturating_add(u16::from(self.sp)), val);
         self.sp -= 1;
+    }
+
+    /// Pops a value from the stack.
+    pub fn pop(&mut self) -> u8 {
+        self.sp += 1;
+        self.mem_read(STACK.saturating_add(u16::from(self.sp)))
     }
 
     /// Takes the next byte from memory, and increments the program counter.

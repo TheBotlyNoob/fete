@@ -99,8 +99,12 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
 
     0x9Au8 => (stack::txs, NoneAddressing, 1, 2),
     0xBAu8 => (stack::tsx, NoneAddressing, 1, 2),
+
     0x48u8 => (stack::pha, NoneAddressing, 1, 3),
+    0x68u8 => (stack::pla, NoneAddressing, 1, 3),
+
     0x08u8 => (stack::php, NoneAddressing, 1, 3),
+    0x28u8 => (stack::plp, NoneAddressing, 1, 3),
 
     0xE8u8 => (inc_dec::inx, NoneAddressing, 1, 2),
 
