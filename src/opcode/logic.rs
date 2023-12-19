@@ -23,6 +23,52 @@ pub fn and(cpu: &mut Cpu, mode: AddressingMode) {
     cpu.set_reg_a(cpu.reg_a & val);
 }
 
+/// Performs a bitwise EOR on the accumulator and a value in memory, and sets the zero and negative flags.
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::cpu::Cpu;
+///
+/// let mut cpu = Cpu::new();
+///
+/// // LDA #$05
+/// // EOR #$05
+/// // BRK
+/// cpu.load_and_run(&[0xA9, 0x05, 0x49, 0x05, 0x00]).unwrap();
+///
+/// assert_eq!(cpu.reg_a, 0x00);
+/// ```
+pub fn eor(cpu: &mut Cpu, mode: AddressingMode) {
+    let addr = cpu.get_op_addr(mode);
+    let val = cpu.mem_read(addr);
+
+    cpu.set_reg_a(cpu.reg_a ^ val);
+}
+
+/// Performs a bitwise OR on the accumulator and a value in memory, and sets the zero and negative flags.
+///
+/// # Examples
+/// ```
+/// # use pretty_assertions::assert_eq;
+/// use fete::cpu::Cpu;
+///
+/// let mut cpu = Cpu::new();
+///
+/// // LDA #$05
+/// // ORA #$0A
+/// // BRK
+/// cpu.load_and_run(&[0xA9, 0x05, 0x09, 0x0A, 0x00]).unwrap();
+///
+/// assert_eq!(cpu.reg_a, 0x0F);
+/// ```
+pub fn ora(cpu: &mut Cpu, mode: AddressingMode) {
+    let addr = cpu.get_op_addr(mode);
+    let val = cpu.mem_read(addr);
+
+    cpu.set_reg_a(cpu.reg_a | val);
+}
+
 /// Tests bits in the accumulator with a value in memory, and sets the zero, negative, and overflow flags.
 /// Bits 7 and 6 of the value in memory are copied into the negative and overflow flags, respectively.
 ///

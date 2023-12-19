@@ -250,7 +250,7 @@ impl Cpu {
     /// cpu.zero_and_neg_flags(1);
     /// assert_eq!(cpu.status, Status::empty());
     ///
-    /// cpu.zero_and_neg_flags(0b1000_0000);
+    /// cpu.zero_and_neg_flags(1 << 7);
     /// assert_eq!(cpu.status, Status::NEGATIVE);
     /// ```
     pub fn zero_and_neg_flags(&mut self, val: u8) {
@@ -297,10 +297,24 @@ impl Cpu {
         self.sp -= 1;
     }
 
+    /// Pushes a little-endian, 16-bit number onto the stack.
+    pub fn push_u16(&mut self, val: u16) {
+        let [lo, hi] = val.to_le_bytes();
+        self.push(hi);
+        self.push(lo);
+    }
+
     /// Pops a value from the stack.
     pub fn pop(&mut self) -> u8 {
         self.sp += 1;
         self.mem_read(STACK.saturating_add(u16::from(self.sp)))
+    }
+
+    /// Pops a little-endian, 16-bit number from the stack.
+    pub fn pop_u16(&mut self) -> u16 {
+        let lo = self.pop();
+        let hi = self.pop();
+        u16::from_le_bytes([lo, hi])
     }
 
     /// Takes the next byte from memory, and increments the program counter.

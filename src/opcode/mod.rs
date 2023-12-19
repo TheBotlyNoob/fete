@@ -6,6 +6,7 @@ pub mod arrith;
 pub mod branch;
 pub mod flags;
 pub mod inc_dec;
+pub mod jmp;
 pub mod load;
 pub mod logic;
 pub mod shift;
@@ -92,10 +93,12 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
     0x94u8 => (load::sty, ZeroPageX, 2, 4),
     0x8Cu8 => (load::sty, Absolute, 3, 4),
 
+
     0xAAu8 => (transfer::tax, NoneAddressing, 1, 2),
     0xA8u8 => (transfer::tay, NoneAddressing, 1, 2),
     0x8Au8 => (transfer::txa, NoneAddressing, 1, 2),
     0x98u8 => (transfer::tya, NoneAddressing, 1, 2),
+
 
     0x9Au8 => (stack::txs, NoneAddressing, 1, 2),
     0xBAu8 => (stack::tsx, NoneAddressing, 1, 2),
@@ -106,6 +109,7 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
     0x08u8 => (stack::php, NoneAddressing, 1, 3),
     0x28u8 => (stack::plp, NoneAddressing, 1, 3),
 
+
     0xE8u8 => (inc_dec::inx, NoneAddressing, 1, 2),
 
     0xC8u8 => (inc_dec::iny, NoneAddressing, 1, 2),
@@ -114,6 +118,7 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
     0xF6u8 => (inc_dec::inc, ZeroPageX, 2, 6),
     0xEEu8 => (inc_dec::inc, Absolute, 3, 6),
     0xFEu8 => (inc_dec::inc, AbsoluteX, 3, 7),
+
 
     0x69u8 => (arrith::adc, Immediate, 2, 2),
     0x65u8 => (arrith::adc, ZeroPage, 2, 3),
@@ -133,7 +138,6 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
     0xE1u8 => (arrith::sbc, IndirectX, 2, 6),
     0xF1u8 => (arrith::sbc, IndirectY, 2, 5),
 
-
     0xC9u8 => (arrith::cmp, Immediate, 2, 2),
     0xC5u8 => (arrith::cmp, ZeroPage, 2, 3),
     0xD5u8 => (arrith::cmp, ZeroPageX, 2, 4),
@@ -151,6 +155,7 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
     0xC4u8 => (arrith::cpy, ZeroPage, 2, 3),
     0xCCu8 => (arrith::cpy, Absolute, 3, 4),
 
+
     0x29u8 => (logic::and, Immediate, 2, 2),
     0x25u8 => (logic::and, ZeroPage, 2, 3),
     0x35u8 => (logic::and, ZeroPageX, 2, 4),
@@ -160,14 +165,52 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
     0x21u8 => (logic::and, IndirectX, 2, 6),
     0x31u8 => (logic::and, IndirectY, 2, 5),
 
+    0x49u8 => (logic::eor, Immediate, 2, 2),
+    0x45u8 => (logic::eor, ZeroPage, 2, 3),
+    0x55u8 => (logic::eor, ZeroPageX, 2, 4),
+    0x4Du8 => (logic::eor, Absolute, 3, 4),
+    0x5Du8 => (logic::eor, AbsoluteX, 3, 4),
+    0x59u8 => (logic::eor, AbsoluteY, 3, 4),
+    0x41u8 => (logic::eor, IndirectX, 2, 6),
+    0x51u8 => (logic::eor, IndirectY, 2, 5),
+
+    0x09u8 => (logic::ora, Immediate, 2, 2),
+    0x05u8 => (logic::ora, ZeroPage, 2, 3),
+    0x15u8 => (logic::ora, ZeroPageX, 2, 4),
+    0x0Du8 => (logic::ora, Absolute, 3, 4),
+    0x1Du8 => (logic::ora, AbsoluteX, 3, 4),
+    0x19u8 => (logic::ora, AbsoluteY, 3, 4),
+    0x01u8 => (logic::ora, IndirectX, 2, 6),
+    0x11u8 => (logic::ora, IndirectY, 2, 5),
+
     0x24u8 => (logic::bit, ZeroPage, 2, 3),
     0x2Cu8 => (logic::bit, Absolute, 3, 4),
+
 
     0x0Au8 => (shift::asl, NoneAddressing, 1, 2),
     0x06u8 => (shift::asl, ZeroPage, 2, 5),
     0x16u8 => (shift::asl, ZeroPageX, 2, 6),
     0x0Eu8 => (shift::asl, Absolute, 3, 6),
     0x1Eu8 => (shift::asl, AbsoluteX, 3, 7),
+
+    0x4Au8 => (shift::lsr, NoneAddressing, 1, 2),
+    0x46u8 => (shift::lsr, ZeroPage, 2, 5),
+    0x56u8 => (shift::lsr, ZeroPageX, 2, 6),
+    0x4Eu8 => (shift::lsr, Absolute, 3, 6),
+    0x5Eu8 => (shift::lsr, AbsoluteX, 3, 7),
+
+    0x2Au8 => (shift::rol, NoneAddressing, 1, 2),
+    0x26u8 => (shift::rol, ZeroPage, 2, 5),
+    0x36u8 => (shift::rol, ZeroPageX, 2, 6),
+    0x2Eu8 => (shift::rol, Absolute, 3, 6),
+    0x3Eu8 => (shift::rol, AbsoluteX, 3, 7),
+
+    0x6Au8 => (shift::ror, NoneAddressing, 1, 2),
+    0x66u8 => (shift::ror, ZeroPage, 2, 5),
+    0x76u8 => (shift::ror, ZeroPageX, 2, 6),
+    0x6Eu8 => (shift::ror, Absolute, 3, 6),
+    0x7Eu8 => (shift::ror, AbsoluteX, 3, 7),
+
 
     0x90u8 => (branch::bcc, Relative, 2, 2),
     0xB0u8 => (branch::bcs, Relative, 2, 2),
@@ -180,6 +223,13 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
 
     0x50u8 => (branch::bvc, Relative, 2, 2),
     0x70u8 => (branch::bvs, Relative, 2, 2),
+
+
+    0x4Cu8 => (jmp::jmp, Absolute, 1, 3),
+    0x6Cu8 => (jmp::jmp, Indirect, 1, 5),
+
+    0x20u8 => (jmp::jsr, Absolute, 3, 6),
+
 
     0x38u8 => (flags::sec, NoneAddressing, 1, 2),
     0x18u8 => (flags::clc, NoneAddressing, 1, 2),
