@@ -3,10 +3,29 @@ use snafu::prelude::*;
 
 const STACK: u16 = 0x0100;
 
-#[derive(Debug, Snafu)]
+#[derive(Snafu)]
 pub enum Error {
     #[snafu(display("invalid opcode: {:#02x}", opcode))]
     InvalidOpcode { opcode: u8, offset: u16 },
+}
+
+impl core::fmt::Debug for Error {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
+        struct DisplayAsDebug<T: core::fmt::Display>(pub T);
+        impl<T: core::fmt::Display> core::fmt::Debug for DisplayAsDebug<T> {
+            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
+                self.0.fmt(f)
+            }
+        }
+
+        match self {
+            Self::InvalidOpcode { opcode, offset } => f
+                .debug_struct("InvalidOpcode")
+                .field("opcode", &DisplayAsDebug(format_args!("{opcode:#02x}")))
+                .field("offset", &DisplayAsDebug(format_args!("{offset:#02x}")))
+                .finish(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -277,6 +296,7 @@ impl Cpu {
             let opcode_info = crate::opcode::OPCODES.get(&opcode);
 
             if let Some(opcode) = opcode_info {
+                println!("{:#02x} {} ({:#?})", self.pc, opcode.name, opcode.mode);
                 (opcode.op)(self, opcode.mode);
             } else {
                 return Err(Error::InvalidOpcode {
@@ -294,7 +314,7 @@ impl Cpu {
     /// Pushes a byte onto the stack.
     pub fn push(&mut self, val: u8) {
         self.mem_write(STACK.saturating_add(u16::from(self.sp)), val);
-        self.sp -= 1;
+        self.sp = self.sp.wrapping_sub(1);
     }
 
     /// Pushes a little-endian, 16-bit number onto the stack.
@@ -306,7 +326,7 @@ impl Cpu {
 
     /// Pops a value from the stack.
     pub fn pop(&mut self) -> u8 {
-        self.sp += 1;
+        self.sp = self.sp.wrapping_add(1);
         self.mem_read(STACK.saturating_add(u16::from(self.sp)))
     }
 

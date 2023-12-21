@@ -230,6 +230,7 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
 
     0x20u8 => (jmp::jsr, Absolute, 3, 6),
 
+    0x60u8 => (jmp::rts, NoneAddressing, 1, 6),
 
     0x38u8 => (flags::sec, NoneAddressing, 1, 2),
     0x18u8 => (flags::clc, NoneAddressing, 1, 2),
