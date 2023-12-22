@@ -244,6 +244,7 @@ pub static OPCODES: Map<u8, OpCode> = opcodes! {
     0xB8u8 => (flags::clv, NoneAddressing, 1, 2),
 
 
+    0x40u8 => (sys::rti, NoneAddressing, 1, 6),
     0xEAu8 => (sys::nop, NoneAddressing, 1, 2),
     0x00u8 => (sys::brk, NoneAddressing, 1, 7),
 };

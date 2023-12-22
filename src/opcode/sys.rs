@@ -34,3 +34,18 @@ pub fn brk(cpu: &mut Cpu, _mode: AddressingMode) {
 pub fn nop(_cpu: &mut Cpu, _mode: AddressingMode) {
     // do nothing
 }
+
+/// Returns from an interrupt processing routine. Pops the value on the stack into the status register, followed by the program counter.
+///
+/// # Examples
+/// ```ignore
+/// # use pretty_assertions::assert_eq;
+/// use fete::cpu::Cpu;
+///
+/// let mut cpu = Cpu::new();
+///
+/// todo!();
+/// ```
+pub fn rti(_cpu: &mut Cpu, _mode: AddressingMode) {
+    todo!("interrupts");
+}

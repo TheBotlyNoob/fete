@@ -301,11 +301,11 @@ impl Cpu {
             } else {
                 return Err(Error::InvalidOpcode {
                     opcode,
-                    offset: self.pc,
+                    offset: self.pc.saturating_sub(1),
                 });
             }
 
-            if self.status.contains(Status::BREAK) {
+            if opcode == 0x00 {
                 break Ok(());
             }
         }
