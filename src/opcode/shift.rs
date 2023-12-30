@@ -24,7 +24,7 @@ pub fn asl(cpu: &mut Cpu, mode: AddressingMode) {
         (0x0000, cpu.reg_a)
     } else {
         let addr = cpu.get_op_addr(mode);
-        (addr, cpu.mem_read(addr))
+        (addr, cpu.bus.mem_read(addr))
     };
 
     let new_val = val << 1;
@@ -33,7 +33,7 @@ pub fn asl(cpu: &mut Cpu, mode: AddressingMode) {
         cpu.set_reg_a(new_val);
     } else {
         cpu.zero_and_neg_flags(new_val);
-        cpu.mem_write(addr, new_val);
+        cpu.bus.mem_write(addr, new_val);
     }
 }
 
@@ -61,7 +61,7 @@ pub fn lsr(cpu: &mut Cpu, mode: AddressingMode) {
         (0x0000, cpu.reg_a)
     } else {
         let addr = cpu.get_op_addr(mode);
-        (addr, cpu.mem_read(addr))
+        (addr, cpu.bus.mem_read(addr))
     };
 
     let new_val = val >> 1;
@@ -70,7 +70,7 @@ pub fn lsr(cpu: &mut Cpu, mode: AddressingMode) {
         cpu.set_reg_a(new_val);
     } else {
         cpu.zero_and_neg_flags(new_val);
-        cpu.mem_write(addr, new_val);
+        cpu.bus.mem_write(addr, new_val);
     }
 }
 
@@ -99,7 +99,7 @@ pub fn rol(cpu: &mut Cpu, mode: AddressingMode) {
         (0x0000, cpu.reg_a)
     } else {
         let addr = cpu.get_op_addr(mode);
-        (addr, cpu.mem_read(addr))
+        (addr, cpu.bus.mem_read(addr))
     };
 
     let new_val = val << 1 | u8::from(cpu.status.contains(Status::CARRY));
@@ -108,7 +108,7 @@ pub fn rol(cpu: &mut Cpu, mode: AddressingMode) {
         cpu.set_reg_a(new_val);
     } else {
         cpu.zero_and_neg_flags(new_val);
-        cpu.mem_write(addr, new_val);
+        cpu.bus.mem_write(addr, new_val);
     }
 }
 
@@ -137,7 +137,7 @@ pub fn ror(cpu: &mut Cpu, mode: AddressingMode) {
         (0x0000, cpu.reg_a)
     } else {
         let addr = cpu.get_op_addr(mode);
-        (addr, cpu.mem_read(addr))
+        (addr, cpu.bus.mem_read(addr))
     };
 
     let new_val = val >> 1 | u8::from(cpu.status.contains(Status::CARRY)) << 7;
@@ -147,6 +147,6 @@ pub fn ror(cpu: &mut Cpu, mode: AddressingMode) {
         cpu.set_reg_a(new_val);
     } else {
         cpu.zero_and_neg_flags(new_val);
-        cpu.mem_write(addr, new_val);
+        cpu.bus.mem_write(addr, new_val);
     }
 }

@@ -18,7 +18,7 @@ use crate::cpu::{AddressingMode, Cpu};
 /// assert_eq!(cpu.status, Status::BREAK);
 /// ```
 pub fn inx(cpu: &mut Cpu, _mode: AddressingMode) {
-    cpu.reg_x += 1;
+    cpu.reg_x = cpu.reg_x.wrapping_add(1);
     cpu.zero_and_neg_flags(cpu.reg_x);
 }
 
@@ -40,7 +40,7 @@ pub fn inx(cpu: &mut Cpu, _mode: AddressingMode) {
 /// assert_eq!(cpu.status, Status::BREAK);
 /// ```
 pub fn iny(cpu: &mut Cpu, _mode: AddressingMode) {
-    cpu.reg_y += 1;
+    cpu.reg_y = cpu.reg_y.wrapping_add(1);
     cpu.zero_and_neg_flags(cpu.reg_y);
 }
 
@@ -60,12 +60,12 @@ pub fn iny(cpu: &mut Cpu, _mode: AddressingMode) {
 /// cpu.load_and_run(&[0xA9, 0x05, 0x8D, 0x00, 0x80, 0xEE, 0x00, 0x80, 0x00])
 ///     .unwrap();
 ///
-/// assert_eq!(cpu.mem_read(0x8000), 0x06);
+/// assert_eq!(cpu.bus.mem_read(0x8000), 0x06);
 /// ```
 pub fn inc(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
-    let val = cpu.mem_read(addr).wrapping_add(1);
+    let val = cpu.bus.mem_read(addr).wrapping_add(1);
 
-    cpu.mem_write(addr, val);
+    cpu.bus.mem_write(addr, val);
     cpu.zero_and_neg_flags(val);
 }

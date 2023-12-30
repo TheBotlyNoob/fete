@@ -18,7 +18,7 @@ use crate::cpu::{AddressingMode, Cpu, Status};
 /// ```
 pub fn and(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
-    let val = cpu.mem_read(addr);
+    let val = cpu.bus.mem_read(addr);
 
     cpu.set_reg_a(cpu.reg_a & val);
 }
@@ -41,7 +41,7 @@ pub fn and(cpu: &mut Cpu, mode: AddressingMode) {
 /// ```
 pub fn eor(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
-    let val = cpu.mem_read(addr);
+    let val = cpu.bus.mem_read(addr);
 
     cpu.set_reg_a(cpu.reg_a ^ val);
 }
@@ -64,7 +64,7 @@ pub fn eor(cpu: &mut Cpu, mode: AddressingMode) {
 /// ```
 pub fn ora(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
-    let val = cpu.mem_read(addr);
+    let val = cpu.bus.mem_read(addr);
 
     cpu.set_reg_a(cpu.reg_a | val);
 }
@@ -94,7 +94,7 @@ pub fn ora(cpu: &mut Cpu, mode: AddressingMode) {
 /// ```
 pub fn bit(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
-    let val = cpu.mem_read(addr);
+    let val = cpu.bus.mem_read(addr);
 
     cpu.status.set(Status::ZERO, cpu.reg_a & val == 0);
     cpu.status.set(Status::NEGATIVE, val & (1 << 7) != 0);

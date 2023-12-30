@@ -68,8 +68,8 @@ pub fn jsr(cpu: &mut Cpu, mode: AddressingMode) {
 ///
 /// assert_eq!(cpu.reg_a, 0x05);
 /// assert_eq!(cpu.pc, 0x8007);
-/// assert_eq!(cpu.mem_read(0x01FF), 0x80);
-/// assert_eq!(cpu.mem_read(0x01FE), 0x05);
+/// assert_eq!(cpu.bus.mem_read(0x01FF), 0x80);
+/// assert_eq!(cpu.bus.mem_read(0x01FE), 0x05);
 /// assert_eq!(cpu.status, Status::INTERRUPT_DISABLE | Status::BREAK);
 /// ```
 pub fn rts(cpu: &mut Cpu, _mode: AddressingMode) {

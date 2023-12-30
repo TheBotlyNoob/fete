@@ -21,7 +21,7 @@ use crate::cpu::{AddressingMode, Cpu, Status};
 /// ```
 pub fn adc(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
-    let val = cpu.mem_read(addr);
+    let val = cpu.bus.mem_read(addr);
 
     let (init_add, first_carry) = cpu.reg_a.overflowing_add(val);
     let (sum, second_carry) =
@@ -57,7 +57,7 @@ pub fn adc(cpu: &mut Cpu, mode: AddressingMode) {
 /// ```
 pub fn sbc(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
-    let val = cpu.mem_read(addr);
+    let val = cpu.bus.mem_read(addr);
 
     let (init_add, first_carry) = cpu.reg_a.overflowing_sub(val);
     let (diff, second_carry) =
@@ -89,7 +89,7 @@ pub fn sbc(cpu: &mut Cpu, mode: AddressingMode) {
 /// ```
 pub fn cmp(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
-    let val = cpu.mem_read(addr);
+    let val = cpu.bus.mem_read(addr);
 
     cpu.status.set(Status::CARRY, cpu.reg_a >= val);
     cpu.zero_and_neg_flags(cpu.reg_a.wrapping_sub(val));
@@ -113,7 +113,7 @@ pub fn cmp(cpu: &mut Cpu, mode: AddressingMode) {
 /// ```
 pub fn cpx(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
-    let val = cpu.mem_read(addr);
+    let val = cpu.bus.mem_read(addr);
 
     cpu.status.set(Status::CARRY, cpu.reg_x >= val);
     cpu.zero_and_neg_flags(cpu.reg_x.wrapping_sub(val));
@@ -137,7 +137,7 @@ pub fn cpx(cpu: &mut Cpu, mode: AddressingMode) {
 /// ```
 pub fn cpy(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
-    let val = cpu.mem_read(addr);
+    let val = cpu.bus.mem_read(addr);
 
     cpu.status.set(Status::CARRY, cpu.reg_y >= val);
     cpu.zero_and_neg_flags(cpu.reg_y.wrapping_sub(val));

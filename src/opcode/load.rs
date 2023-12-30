@@ -18,7 +18,7 @@ use crate::cpu::{AddressingMode, Cpu};
 /// ```
 pub fn lda(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
-    let val = cpu.mem_read(addr);
+    let val = cpu.bus.mem_read(addr);
 
     cpu.set_reg_a(val);
 }
@@ -41,7 +41,7 @@ pub fn lda(cpu: &mut Cpu, mode: AddressingMode) {
 /// ```
 pub fn ldx(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
-    let val = cpu.mem_read(addr);
+    let val = cpu.bus.mem_read(addr);
 
     cpu.reg_x = val;
     cpu.zero_and_neg_flags(val);
@@ -65,7 +65,7 @@ pub fn ldx(cpu: &mut Cpu, mode: AddressingMode) {
 /// ```
 pub fn ldy(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
-    let val = cpu.mem_read(addr);
+    let val = cpu.bus.mem_read(addr);
 
     cpu.reg_y = val;
     cpu.zero_and_neg_flags(val);
@@ -87,11 +87,11 @@ pub fn ldy(cpu: &mut Cpu, mode: AddressingMode) {
 /// cpu.load_and_run(&[0xA9, 0x05, 0x8D, 0x00, 0x80, 0x00])
 ///     .unwrap(); // keep in mind that the 16-bit address is stored in little-endian
 ///
-/// assert_eq!(cpu.mem_read(0x8000), 0x05);
+/// assert_eq!(cpu.bus.mem_read(0x8000), 0x05);
 /// ```
 pub fn sta(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
-    cpu.mem_write(addr, cpu.reg_a);
+    cpu.bus.mem_write(addr, cpu.reg_a);
 }
 
 /// Stores the value in the X register into memory.
@@ -109,11 +109,11 @@ pub fn sta(cpu: &mut Cpu, mode: AddressingMode) {
 /// cpu.load_and_run(&[0xA2, 0x05, 0x8E, 0x00, 0x80, 0x00])
 ///     .unwrap(); // keep in mind that the 16-bit address is stored in little-endian
 ///
-/// assert_eq!(cpu.mem_read(0x8000), 0x05);
+/// assert_eq!(cpu.bus.mem_read(0x8000), 0x05);
 /// ```
 pub fn stx(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
-    cpu.mem_write(addr, cpu.reg_x);
+    cpu.bus.mem_write(addr, cpu.reg_x);
 }
 
 /// Stores the value in the Y register into memory.
@@ -131,9 +131,9 @@ pub fn stx(cpu: &mut Cpu, mode: AddressingMode) {
 /// cpu.load_and_run(&[0xA0, 0x05, 0x8C, 0x00, 0x80, 0x00])
 ///     .unwrap(); // keep in mind that the 16-bit address is stored in little-endian
 ///
-/// assert_eq!(cpu.mem_read(0x8000), 0x05);
+/// assert_eq!(cpu.bus.mem_read(0x8000), 0x05);
 /// ```
 pub fn sty(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
-    cpu.mem_write(addr, cpu.reg_y);
+    cpu.bus.mem_write(addr, cpu.reg_y);
 }

@@ -1,7 +1,10 @@
 use bitflags::bitflags;
 use snafu::prelude::*;
 
-const STACK: u16 = 0x0100;
+use crate::bus::Bus;
+
+pub const STACK: u16 = 0x0100;
+pub const STACK_RESET: u8 = 0xFD;
 
 #[derive(Snafu)]
 pub enum Error {
@@ -162,7 +165,7 @@ pub struct Cpu {
     pub status: Status,
     pub sp: u8,
     pub pc: u16,
-    pub mem: [u8; 0xFFFF],
+    pub bus: Bus,
 }
 
 impl Default for Cpu {
@@ -172,9 +175,9 @@ impl Default for Cpu {
             reg_x: 0,
             reg_y: 0,
             status: Status::default(),
-            sp: 0xFF,
+            sp: STACK_RESET,
             pc: 0,
-            mem: [0; 0xFFFF],
+            bus: Bus::default(),
         }
     }
 }
@@ -188,11 +191,11 @@ impl Cpu {
 
     /// Resets the CPU to its initial state. Keeps the memory intact.
     pub fn reset(&mut self) {
-        *self = Self {
-            pc: self.mem_read_u16(0xFFFC),
-            mem: self.mem,
+        replace_with::replace_with_or_default(self, |self_| Self {
+            pc: self_.bus.mem_read_u16(0xFFFC),
+            bus: self_.bus,
             ..Self::default()
-        }
+        });
     }
 
     /// Gets the address at the current program count, using the given [`AddressingMode`]. Increments the program count as needed.
@@ -201,7 +204,7 @@ impl Cpu {
         match mode {
             AddressingMode::Immediate => {
                 let prev_pc = self.pc;
-                self.pc += 1;
+                self.pc = self.pc.wrapping_add(1);
                 prev_pc
             }
             AddressingMode::ZeroPage => u16::from(self.take()),
@@ -212,15 +215,15 @@ impl Cpu {
             AddressingMode::AbsoluteY => self.take_u16().wrapping_add(u16::from(self.reg_y)),
             AddressingMode::Indirect => {
                 let real_addr = self.take_u16();
-                self.mem_read_u16(real_addr)
+                self.bus.mem_read_u16(real_addr)
             }
             AddressingMode::IndirectX => {
                 let real_addr = u16::from(self.take());
-                self.mem_read_u16(real_addr) + u16::from(self.reg_x)
+                self.bus.mem_read_u16(real_addr) + u16::from(self.reg_x)
             }
             AddressingMode::IndirectY => {
                 let real_addr = u16::from(self.take());
-                self.mem_read_u16(real_addr) + u16::from(self.reg_y)
+                self.bus.mem_read_u16(real_addr) + u16::from(self.reg_y)
             }
             AddressingMode::Relative => {
                 let offset = self.take(); // self.pc + 1
@@ -233,9 +236,11 @@ impl Cpu {
     }
 
     /// Loads the given program into memory, and sets the program counter to the start of the program.
-    pub fn load(&mut self, prog: &[u8]) {
-        self.mem[0x8000..0x8000 + prog.len()].copy_from_slice(prog);
-        self.mem_write_u16(0xFFFC, 0x8000);
+    pub fn load(&mut self, prog: &[u8]) -> Result<(), Error> {
+        for (i, &b) in prog.iter().enumerate().take(usize::from(u16::MAX)) {
+            self.bus.mem_write(0x0600 + i as u16, b);
+        }
+        Ok(())
     }
 
     /// Loads the given program into memory, resets the CPU, and runs the program.
@@ -243,7 +248,7 @@ impl Cpu {
     /// # Errors
     /// Returns an [`Error::InvalidOpcode`] if an invalid opcode is encountered.
     pub fn load_and_run(&mut self, prog: &[u8]) -> Result<(), Error> {
-        self.load(prog);
+        self.load(prog)?;
         self.reset();
         self.run()
     }
@@ -313,7 +318,8 @@ impl Cpu {
 
     /// Pushes a byte onto the stack.
     pub fn push(&mut self, val: u8) {
-        self.mem_write(STACK.saturating_add(u16::from(self.sp)), val);
+        self.bus
+            .mem_write(STACK.saturating_add(u16::from(self.sp)), val);
         self.sp = self.sp.wrapping_sub(1);
     }
 
@@ -327,7 +333,7 @@ impl Cpu {
     /// Pops a value from the stack.
     pub fn pop(&mut self) -> u8 {
         self.sp = self.sp.wrapping_add(1);
-        self.mem_read(STACK.saturating_add(u16::from(self.sp)))
+        self.bus.mem_read(STACK.saturating_add(u16::from(self.sp)))
     }
 
     /// Pops a little-endian, 16-bit number from the stack.
@@ -339,43 +345,15 @@ impl Cpu {
 
     /// Takes the next byte from memory, and increments the program counter.
     fn take(&mut self) -> u8 {
-        let byte = self.mem_read(self.pc);
-        self.pc += 1;
+        let byte = self.bus.mem_read(self.pc);
+        self.pc = self.pc.wrapping_add(1);
         byte
     }
     /// Takes the next little-endian, 16-bit number from memory, and increments the program counter.
     fn take_u16(&mut self) -> u16 {
-        let num = self.mem_read_u16(self.pc);
-        self.pc += 2;
+        let num = self.bus.mem_read_u16(self.pc);
+        self.pc = self.pc.wrapping_add(2);
         num
-    }
-
-    #[must_use]
-    /// Reads a byte from memory, _without_ incrementing the program counter.
-    pub fn mem_read(&self, addr: u16) -> u8 {
-        // SAFETY: `addr` is always in bounds, as the maximum value of `u16` is 0xFFFF.
-        unsafe { *self.mem.get_unchecked(addr as usize) }
-    }
-
-    /// Writes a byte to memory.
-    pub fn mem_write(&mut self, addr: u16, val: u8) {
-        // SAFETY: `addr` is always in bounds, as the maximum value of `u16` is 0xFFFF.
-        unsafe { *self.mem.get_unchecked_mut(addr as usize) = val };
-    }
-
-    #[must_use]
-    /// Reads a little-endian, 16-bit number from memory, _without_ incrementing the program counter.
-    pub fn mem_read_u16(&self, addr: u16) -> u16 {
-        let lo = self.mem_read(addr);
-        let hi = self.mem_read(addr + 1);
-        u16::from_le_bytes([lo, hi])
-    }
-
-    /// Writes a little-endian, 16-bit number to memory.
-    pub fn mem_write_u16(&mut self, addr: u16, val: u16) {
-        let [lo, hi] = val.to_le_bytes();
-        self.mem_write(addr, lo);
-        self.mem_write(addr + 1, hi);
     }
 }
 
@@ -388,7 +366,7 @@ mod test {
     #[test]
     fn op_addr_immediate() {
         let mut cpu = Cpu::new();
-        cpu.mem_write(0x0000, 0x05);
+        cpu.bus.mem_write(0x0000, 0x05);
 
         assert_eq!(cpu.get_op_addr(AddressingMode::Immediate), 0x0000);
         assert_eq!(cpu.pc, 0x0001);
@@ -397,7 +375,7 @@ mod test {
     #[test]
     fn op_addr_zero_page() {
         let mut cpu = Cpu::new();
-        cpu.mem_write(0x0000, 0x05);
+        cpu.bus.mem_write(0x0000, 0x05);
 
         assert_eq!(cpu.get_op_addr(AddressingMode::ZeroPage), 0x05);
         assert_eq!(cpu.pc, 0x0001);
@@ -409,7 +387,7 @@ mod test {
     #[test]
     fn op_addr_zero_page_x() {
         let mut cpu = Cpu::new();
-        cpu.mem_write(0x0000, 0x05);
+        cpu.bus.mem_write(0x0000, 0x05);
         cpu.reg_x = 0x05;
 
         assert_eq!(cpu.get_op_addr(AddressingMode::ZeroPageX), 0x0A);
@@ -422,7 +400,7 @@ mod test {
     #[test]
     fn op_addr_zero_page_y() {
         let mut cpu = Cpu::new();
-        cpu.mem_write(0x0000, 0x05);
+        cpu.bus.mem_write(0x0000, 0x05);
         cpu.reg_y = 0x05;
 
         assert_eq!(cpu.get_op_addr(AddressingMode::ZeroPageY), 0x0A);
@@ -435,7 +413,7 @@ mod test {
     #[test]
     fn op_addr_absolute() {
         let mut cpu = Cpu::new();
-        cpu.mem_write_u16(0x0000, 0x1234);
+        cpu.bus.mem_write_u16(0x0000, 0x1234);
 
         assert_eq!(cpu.get_op_addr(AddressingMode::Absolute), 0x1234);
         assert_eq!(cpu.pc, 0x0002);
@@ -444,7 +422,7 @@ mod test {
     #[test]
     fn op_addr_absolute_x() {
         let mut cpu = Cpu::new();
-        cpu.mem_write_u16(0x0000, 0x1234);
+        cpu.bus.mem_write_u16(0x0000, 0x1234);
         cpu.reg_x = 0x05;
 
         assert_eq!(cpu.get_op_addr(AddressingMode::AbsoluteX), 0x1239);
@@ -454,7 +432,7 @@ mod test {
     #[test]
     fn op_addr_absolute_y() {
         let mut cpu = Cpu::new();
-        cpu.mem_write_u16(0x0000, 0x1234);
+        cpu.bus.mem_write_u16(0x0000, 0x1234);
         cpu.reg_y = 0x05;
 
         assert_eq!(cpu.get_op_addr(AddressingMode::AbsoluteY), 0x1239);
@@ -464,8 +442,8 @@ mod test {
     #[test]
     fn op_addr_indirect() {
         let mut cpu = Cpu::new();
-        cpu.mem_write_u16(0x0000, 0x1234);
-        cpu.mem_write_u16(0x1234, 0x5678);
+        cpu.bus.mem_write_u16(0x0000, 0x1234);
+        cpu.bus.mem_write_u16(0x1234, 0x5678);
 
         assert_eq!(cpu.get_op_addr(AddressingMode::Indirect), 0x5678);
         assert_eq!(cpu.pc, 0x0002);
@@ -474,8 +452,8 @@ mod test {
     #[test]
     fn op_addr_indirect_x() {
         let mut cpu = Cpu::new();
-        cpu.mem_write(0x0000, 0x12);
-        cpu.mem_write_u16(0x0012, 0x1234);
+        cpu.bus.mem_write(0x0000, 0x12);
+        cpu.bus.mem_write_u16(0x0012, 0x1234);
         cpu.reg_x = 0x05;
 
         assert_eq!(cpu.get_op_addr(AddressingMode::IndirectX), 0x1239);
@@ -485,8 +463,8 @@ mod test {
     #[test]
     fn op_addr_indirect_y() {
         let mut cpu = Cpu::new();
-        cpu.mem_write(0x0000, 0x12);
-        cpu.mem_write_u16(0x0012, 0x1234);
+        cpu.bus.mem_write(0x0000, 0x12);
+        cpu.bus.mem_write_u16(0x0012, 0x1234);
         cpu.reg_y = 0x05;
 
         assert_eq!(cpu.get_op_addr(AddressingMode::IndirectY), 0x1239);

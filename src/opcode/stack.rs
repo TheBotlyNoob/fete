@@ -57,7 +57,7 @@ pub fn txs(cpu: &mut Cpu, _mode: AddressingMode) {
 /// // BRK
 /// cpu.load_and_run(&[0xA9, 0x05, 0x48, 0x00]).unwrap();
 ///
-/// assert_eq!(cpu.mem_read(0x01FF), 0x05);
+/// assert_eq!(cpu.pop(), 0x05);
 /// assert_eq!(cpu.sp, 0xFE);
 /// ```
 pub fn pha(cpu: &mut Cpu, _mode: AddressingMode) {
@@ -69,7 +69,7 @@ pub fn pha(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// use fete::cpu::{Cpu, Status};
+/// use fete::cpu::{Cpu, Status, STACK_RESET};
 ///
 /// let mut cpu = Cpu::new();
 ///
@@ -82,7 +82,7 @@ pub fn pha(cpu: &mut Cpu, _mode: AddressingMode) {
 ///     .unwrap();
 ///
 /// assert_eq!(cpu.reg_a, 0x05);
-/// assert_eq!(cpu.sp, 0xFF);
+/// assert_eq!(cpu.sp,);
 /// assert_eq!(cpu.status, Status::BREAK);
 /// ```
 pub fn pla(cpu: &mut Cpu, _mode: AddressingMode) {
@@ -106,7 +106,7 @@ pub fn pla(cpu: &mut Cpu, _mode: AddressingMode) {
 /// cpu.load_and_run(&[0x78, 0x08, 0x00]).unwrap();
 ///
 /// assert_eq!(
-///     cpu.mem_read(0x01FF),
+///     cpu.bus.mem_read(0x01FF),
 ///     (Status::INTERRUPT_DISABLE | Status::BREAK | Status::UNUSED).bits()
 /// );
 /// assert_eq!(cpu.sp, 0xFE);
