@@ -158,44 +158,34 @@ bitflags! {
     }
 }
 
-pub struct Cpu {
+pub struct Cpu<'rom> {
     pub reg_a: u8,
     pub reg_x: u8,
     pub reg_y: u8,
     pub status: Status,
     pub sp: u8,
     pub pc: u16,
-    pub bus: Bus,
+    pub bus: Bus<'rom>,
 }
 
-impl Default for Cpu {
-    fn default() -> Self {
+impl<'rom> Cpu<'rom> {
+    /// Creates a new CPU with the default state.
+    #[must_use]
+    pub fn new(bus: Bus<'rom>) -> Self {
         Self {
             reg_a: 0,
             reg_x: 0,
             reg_y: 0,
             status: Status::default(),
             sp: STACK_RESET,
-            pc: 0,
-            bus: Bus::default(),
+            pc: bus.mem_read_u16(0xFFFC),
+            bus,
         }
-    }
-}
-
-impl Cpu {
-    /// Creates a new CPU with the default state.
-    #[must_use]
-    pub fn new() -> Self {
-        Self::default()
     }
 
     /// Resets the CPU to its initial state. Keeps the memory intact.
     pub fn reset(&mut self) {
-        replace_with::replace_with_or_default(self, |self_| Self {
-            pc: self_.bus.mem_read_u16(0xFFFC),
-            bus: self_.bus,
-            ..Self::default()
-        });
+        replace_with::replace_with(self, || unreachable!(), |self_| Self::new(self_.bus));
     }
 
     /// Gets the address at the current program count, using the given [`AddressingMode`]. Increments the program count as needed.
@@ -240,6 +230,7 @@ impl Cpu {
         for (i, &b) in prog.iter().enumerate().take(usize::from(u16::MAX)) {
             self.bus.mem_write(0x0600 + i as u16, b);
         }
+        self.pc = self.bus.mem_read_u16(0xFFFC);
         Ok(())
     }
 
@@ -297,23 +288,31 @@ impl Cpu {
     /// Returns an [`Error::InvalidOpcode`] if an invalid opcode is encountered.
     pub fn run(&mut self) -> Result<(), Error> {
         loop {
-            let opcode = self.take();
-            let opcode_info = crate::opcode::OPCODES.get(&opcode);
-
-            if let Some(opcode) = opcode_info {
-                println!("{:#02x} {} ({:#?})", self.pc, opcode.name, opcode.mode);
-                (opcode.op)(self, opcode.mode);
-            } else {
-                return Err(Error::InvalidOpcode {
-                    opcode,
-                    offset: self.pc.saturating_sub(1),
-                });
-            }
-
-            if opcode == 0x00 {
+            if self.tick()? {
                 break Ok(());
             }
         }
+    }
+
+    /// Ticks the current cpu cycle, executing the current instruction loaded into memory.
+    ///
+    /// # Errors
+    /// Returns an [`Error::InvalidOpcode`] if an invalid opcode is encountered.
+    pub fn tick(&mut self) -> Result<bool, Error> {
+        let opcode = self.take();
+        let opcode_info = crate::opcode::OPCODES.get(&opcode);
+
+        if let Some(opcode) = opcode_info {
+            println!("{:#02x} {} ({:#?})", self.pc, opcode.name, opcode.mode);
+            (opcode.op)(self, opcode.mode);
+        } else {
+            return Err(Error::InvalidOpcode {
+                opcode,
+                offset: self.pc.saturating_sub(1),
+            });
+        }
+
+        Ok(opcode == 0x00)
     }
 
     /// Pushes a byte onto the stack.
@@ -360,12 +359,15 @@ impl Cpu {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::rom::{common_test::test_rom, Rom};
     use pretty_assertions::assert_eq;
     use test_log::test;
 
     #[test]
     fn op_addr_immediate() {
-        let mut cpu = Cpu::new();
+        let rom = test_rom();
+        let bus = Bus::new(Rom::new(&rom).unwrap());
+        let mut cpu = Cpu::new(bus);
         cpu.bus.mem_write(0x0000, 0x05);
 
         assert_eq!(cpu.get_op_addr(AddressingMode::Immediate), 0x0000);
@@ -374,7 +376,9 @@ mod test {
 
     #[test]
     fn op_addr_zero_page() {
-        let mut cpu = Cpu::new();
+        let rom = test_rom();
+        let bus = Bus::new(Rom::new(&rom).unwrap());
+        let mut cpu = Cpu::new(bus);
         cpu.bus.mem_write(0x0000, 0x05);
 
         assert_eq!(cpu.get_op_addr(AddressingMode::ZeroPage), 0x05);
@@ -386,7 +390,9 @@ mod test {
 
     #[test]
     fn op_addr_zero_page_x() {
-        let mut cpu = Cpu::new();
+        let rom = test_rom();
+        let bus = Bus::new(Rom::new(&rom).unwrap());
+        let mut cpu = Cpu::new(bus);
         cpu.bus.mem_write(0x0000, 0x05);
         cpu.reg_x = 0x05;
 
@@ -399,7 +405,9 @@ mod test {
 
     #[test]
     fn op_addr_zero_page_y() {
-        let mut cpu = Cpu::new();
+        let rom = test_rom();
+        let bus = Bus::new(Rom::new(&rom).unwrap());
+        let mut cpu = Cpu::new(bus);
         cpu.bus.mem_write(0x0000, 0x05);
         cpu.reg_y = 0x05;
 
@@ -412,7 +420,9 @@ mod test {
 
     #[test]
     fn op_addr_absolute() {
-        let mut cpu = Cpu::new();
+        let rom = test_rom();
+        let bus = Bus::new(Rom::new(&rom).unwrap());
+        let mut cpu = Cpu::new(bus);
         cpu.bus.mem_write_u16(0x0000, 0x1234);
 
         assert_eq!(cpu.get_op_addr(AddressingMode::Absolute), 0x1234);
@@ -421,7 +431,9 @@ mod test {
 
     #[test]
     fn op_addr_absolute_x() {
-        let mut cpu = Cpu::new();
+        let rom = test_rom();
+        let bus = Bus::new(Rom::new(&rom).unwrap());
+        let mut cpu = Cpu::new(bus);
         cpu.bus.mem_write_u16(0x0000, 0x1234);
         cpu.reg_x = 0x05;
 
@@ -431,7 +443,9 @@ mod test {
 
     #[test]
     fn op_addr_absolute_y() {
-        let mut cpu = Cpu::new();
+        let rom = test_rom();
+        let bus = Bus::new(Rom::new(&rom).unwrap());
+        let mut cpu = Cpu::new(bus);
         cpu.bus.mem_write_u16(0x0000, 0x1234);
         cpu.reg_y = 0x05;
 
@@ -441,7 +455,9 @@ mod test {
 
     #[test]
     fn op_addr_indirect() {
-        let mut cpu = Cpu::new();
+        let rom = test_rom();
+        let bus = Bus::new(Rom::new(&rom).unwrap());
+        let mut cpu = Cpu::new(bus);
         cpu.bus.mem_write_u16(0x0000, 0x1234);
         cpu.bus.mem_write_u16(0x1234, 0x5678);
 
@@ -451,7 +467,9 @@ mod test {
 
     #[test]
     fn op_addr_indirect_x() {
-        let mut cpu = Cpu::new();
+        let rom = test_rom();
+        let bus = Bus::new(Rom::new(&rom).unwrap());
+        let mut cpu = Cpu::new(bus);
         cpu.bus.mem_write(0x0000, 0x12);
         cpu.bus.mem_write_u16(0x0012, 0x1234);
         cpu.reg_x = 0x05;
@@ -462,7 +480,9 @@ mod test {
 
     #[test]
     fn op_addr_indirect_y() {
-        let mut cpu = Cpu::new();
+        let rom = test_rom();
+        let bus = Bus::new(Rom::new(&rom).unwrap());
+        let mut cpu = Cpu::new(bus);
         cpu.bus.mem_write(0x0000, 0x12);
         cpu.bus.mem_write_u16(0x0012, 0x1234);
         cpu.reg_y = 0x05;
@@ -474,7 +494,9 @@ mod test {
     #[test]
     #[should_panic = "NoneAddressing is not a valid addressing mode"]
     fn op_addr_none_addressing() {
-        let mut cpu = Cpu::new();
+        let rom = test_rom();
+        let bus = Bus::new(Rom::new(&rom).unwrap());
+        let mut cpu = Cpu::new(bus);
 
         cpu.get_op_addr(AddressingMode::NoneAddressing);
     }

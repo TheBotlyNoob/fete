@@ -24,9 +24,9 @@ pub enum Mirroring {
     FourScreen,
 }
 #[derive(Debug, Clone)]
-pub struct Rom<'a> {
-    pub prg_rom: &'a [u8],
-    pub chr_rom: &'a [u8],
+pub struct Rom<'rom> {
+    pub prg_rom: &'rom [u8],
+    pub chr_rom: &'rom [u8],
     pub mapper: u8,
     pub mirroring: Mirroring,
 }
@@ -80,18 +80,17 @@ impl<'a> Rom<'a> {
 }
 
 #[cfg(test)]
-mod test {
+pub(crate) mod common_test {
     use super::*;
-    use pretty_assertions::assert_eq;
 
-    struct TestRom {
-        header: Vec<u8>,
-        trainer: Option<Vec<u8>>,
-        pgp_rom: Vec<u8>,
-        chr_rom: Vec<u8>,
+    pub struct TestRom {
+        pub header: Vec<u8>,
+        pub trainer: Option<Vec<u8>>,
+        pub pgp_rom: Vec<u8>,
+        pub chr_rom: Vec<u8>,
     }
 
-    fn create_rom(rom: TestRom) -> Vec<u8> {
+    pub fn create_rom(rom: TestRom) -> Vec<u8> {
         let mut result = Vec::with_capacity(
             rom.header.len()
                 + rom.trainer.as_ref().map_or(0, Vec::len)
@@ -108,6 +107,24 @@ mod test {
 
         result
     }
+
+    pub fn test_rom() -> Vec<u8> {
+        create_rom(TestRom {
+            header: vec![
+                0x4E, 0x45, 0x53, 0x1A, 0x02, 0x01, 0x31, 00, 00, 00, 00, 00, 00, 00, 00, 00,
+            ],
+            trainer: None,
+            pgp_rom: vec![1; 2 * PRG_ROM_PAGE_SIZE],
+            chr_rom: vec![2; 1 * CHR_ROM_PAGE_SIZE],
+        })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use common_test::{create_rom, TestRom};
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test() {

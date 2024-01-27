@@ -1,24 +1,24 @@
 use std::ptr::NonNull;
 
+use crate::rom::Rom;
+
 const RAM: u16 = 0x0000;
 const RAM_MIRRORS_END: u16 = 0x1FFF;
 const PPU_REGISTERS: u16 = 0x2000;
 const PPU_REGISTERS_MIRRORS_END: u16 = 0x3FFF;
 
 #[derive(Clone)]
-pub struct Bus {
+pub struct Bus<'rom> {
     pub vram: [u8; 2048],
+    pub rom: Rom<'rom>,
 }
 
-impl Default for Bus {
-    fn default() -> Self {
-        Self { vram: [0; 2048] }
-    }
-}
-
-impl Bus {
-    pub fn new() -> Self {
-        Self::default()
+impl<'rom> Bus<'rom> {
+    pub fn new(rom: Rom<'rom>) -> Self {
+        Self {
+            vram: [0; 2048],
+            rom,
+        }
     }
 
     pub fn mirror(&self, addr: u16) -> Option<&u8> {
@@ -34,19 +34,22 @@ impl Bus {
     fn mirror_addr(&self, addr: u16) -> Option<NonNull<u8>> {
         match addr {
             RAM..=RAM_MIRRORS_END => {
-                let mirror_down_addr = addr & 0b00000111_11111111;
+                let mirror_down_addr = addr & 0b0000_0111_1111_1111;
                 self.vram.get(mirror_down_addr as usize).map(NonNull::from)
             }
             PPU_REGISTERS..=PPU_REGISTERS_MIRRORS_END => {
-                let _mirror_down_addr = addr & 0b00100000_00000111;
-                todo!("PPU is not supported yet")
+                let _mirror_down_addr = addr & 0b0010_0000_0000_0111;
+                // todo!("PPU is not supported yet")
+                unsafe {
+                    std::hint::unreachable_unchecked();
+                }
             }
             _ => None,
         }
     }
 
-    #[must_use]
     /// Reads a byte from memory, _without_ incrementing the program counter.
+    #[must_use]
     pub fn mem_read(&self, addr: u16) -> u8 {
         if let Some(&val) = self.mirror(addr) {
             val
@@ -61,7 +64,7 @@ impl Bus {
         if let Some(v) = self.mirror_mut(addr) {
             *v = val;
         } else {
-            panic!("ignoring memory write at: {addr:#02x}");
+            log::warn!("ignoring memory write at: {addr:#02x}");
         }
     }
 
