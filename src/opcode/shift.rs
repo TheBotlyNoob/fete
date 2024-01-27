@@ -6,9 +6,12 @@ use crate::cpu::{AddressingMode, Cpu, Status};
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$05
 /// // ASL A
@@ -43,9 +46,12 @@ pub fn asl(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$05
 /// // LSR A
@@ -80,9 +86,12 @@ pub fn lsr(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$05
 /// // SEC
@@ -118,9 +127,12 @@ pub fn rol(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$05
 /// // SEC

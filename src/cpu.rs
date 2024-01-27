@@ -254,10 +254,15 @@ impl<'rom> Cpu<'rom> {
     ///
     /// # Examples
     /// ```
-    /// # use pretty_assertions::assert_eq;
+    /// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
     /// use fete::cpu::{Cpu, Status};
     ///
-    /// let mut cpu = Cpu::new();
+    /// # let rom = test_rom();
+/// # let bus = Bus::new(&rom);
+/// let mut cpu = Cpu::new(bus);
     ///
     /// cpu.zero_and_neg_flags(0);
     /// assert_eq!(cpu.status, Status::ZERO);

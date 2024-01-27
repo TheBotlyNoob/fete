@@ -12,9 +12,12 @@ fn branch_if(cpu: &mut Cpu, mode: AddressingMode, cond: bool) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::Cpu;
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // CLC
 /// // BCC
@@ -32,9 +35,12 @@ pub fn bcc(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::Cpu;
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // SEC
 /// // BCS $02
@@ -52,9 +58,12 @@ pub fn bcs(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::Cpu;
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$00
 /// // BEQ $02
@@ -72,9 +81,12 @@ pub fn beq(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::Cpu;
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$01
 /// // BNE $02
@@ -92,9 +104,12 @@ pub fn bne(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::Cpu;
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$80 ; 0x80 is -128
 /// // BMI $02
@@ -112,9 +127,12 @@ pub fn bmi(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::Cpu;
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$01
 /// // BMI $02
@@ -132,9 +150,12 @@ pub fn bpl(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::Cpu;
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$40
 /// // STA $80
@@ -158,9 +179,12 @@ pub fn bvs(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::Cpu;
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // CLV
 /// // BMI $02

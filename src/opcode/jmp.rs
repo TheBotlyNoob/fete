@@ -5,9 +5,12 @@ use crate::cpu::{AddressingMode, Cpu};
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$05
 /// // JMP $C000
@@ -29,9 +32,12 @@ pub fn jmp(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$05
 /// // JSR $C000
@@ -54,9 +60,12 @@ pub fn jsr(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$05
 /// // JSR $8006

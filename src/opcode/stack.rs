@@ -5,9 +5,12 @@ use crate::cpu::{AddressingMode, Cpu, Status};
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDX #$05
 /// // TXS
@@ -28,9 +31,12 @@ pub fn tsx(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDX #$05
 /// // TXS
@@ -48,9 +54,12 @@ pub fn txs(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::Cpu;
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$05
 /// // PHA
@@ -69,9 +78,12 @@ pub fn pha(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status, STACK_RESET};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$05
 /// // PHA
@@ -96,9 +108,12 @@ pub fn pla(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // SEI
 /// // PHP
@@ -120,9 +135,12 @@ pub fn php(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // SEI
 /// // PHP

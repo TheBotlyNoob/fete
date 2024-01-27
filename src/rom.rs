@@ -79,8 +79,8 @@ impl<'a> Rom<'a> {
     }
 }
 
-#[cfg(test)]
-pub(crate) mod common_test {
+#[cfg(any(test, fete_doctest))] // fete_doctest cfg is set in .cargo/config.toml
+pub mod common_test {
     use super::*;
 
     pub struct TestRom {

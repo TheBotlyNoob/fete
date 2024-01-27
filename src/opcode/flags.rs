@@ -5,9 +5,12 @@ use crate::cpu::{AddressingMode, Cpu, Status};
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // SEC
 /// // BRK
@@ -24,9 +27,12 @@ pub fn sec(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // SEC
 /// // CLC
@@ -44,9 +50,12 @@ pub fn clc(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // SED
 /// // BRK
@@ -63,9 +72,12 @@ pub fn sed(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // SED
 /// // CLD
@@ -83,9 +95,12 @@ pub fn cld(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // SEI
 /// // BRK
@@ -102,9 +117,12 @@ pub fn sei(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // SEI
 /// // CLI
@@ -122,9 +140,12 @@ pub fn cli(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
+/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
 /// use fete::cpu::{Cpu, Status};
 ///
-/// let mut cpu = Cpu::new();
+/// # let rom = test_rom();
+/// # let bus = Bus::new(Rom::new(&rom).unwrap());
+/// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$40
 /// // STA $80
