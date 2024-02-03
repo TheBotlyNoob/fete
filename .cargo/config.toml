@@ -1,4 +1,2 @@
-[build]
-# this compiles dependencies for doctests
-# QoL to put it here so `cargo test` just works. 
-rustflags = ["--cfg", "fete_doctest"]
+[alias]
+xtask = "run --package xtask --"

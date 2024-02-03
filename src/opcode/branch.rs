@@ -20,11 +20,15 @@ fn branch_if(cpu: &mut Cpu, mode: AddressingMode, cond: bool) {
 /// let mut cpu = Cpu::new(bus);
 ///
 /// // CLC
-/// // BCC
+/// // BCC $01
 /// // BRK
-/// cpu.load_and_run(&[0x18, 0x90, 0x02, 0x00]).unwrap();
+/// // LDA #$05
+/// // BRK
+/// cpu.load_and_run(&[0x18, 0x90, 0x01, 0x00, 0xA9, 0x05, 0x00])
+///     .unwrap();
 ///
-/// assert_eq!(cpu.pc, 0x8007);
+/// assert_eq!(cpu.reg_a, 0x05);
+/// assert_eq!(cpu.pc, 0x0608);
 /// ```
 pub fn bcc(cpu: &mut Cpu, mode: AddressingMode) {
     branch_if(cpu, mode, !cpu.status.contains(Status::CARRY));

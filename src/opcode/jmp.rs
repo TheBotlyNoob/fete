@@ -12,14 +12,15 @@ use crate::cpu::{AddressingMode, Cpu};
 /// # let bus = Bus::new(Rom::new(&rom).unwrap());
 /// let mut cpu = Cpu::new(bus);
 ///
-/// // LDA #$05
-/// // JMP $C000
+/// // JMP $0604
 /// // BRK
-/// cpu.load_and_run(&[0xA9, 0x05, 0x4C, 0x00, 0xC0, 0x00])
+/// // LDA #$05
+/// // BRK
+/// cpu.load_and_run(&[0x4C, 0x04, 0x06, 0x00, 0xA9, 0x05, 0x00])
 ///     .unwrap();
 ///
 /// assert_eq!(cpu.reg_a, 0x05);
-/// assert_eq!(cpu.pc, 0xC002);
+/// assert_eq!(cpu.pc, 0x0608);
 /// assert_eq!(cpu.status, Status::BREAK);
 /// ```
 pub fn jmp(cpu: &mut Cpu, mode: AddressingMode) {
@@ -39,8 +40,9 @@ pub fn jmp(cpu: &mut Cpu, mode: AddressingMode) {
 /// # let bus = Bus::new(Rom::new(&rom).unwrap());
 /// let mut cpu = Cpu::new(bus);
 ///
-/// // LDA #$05
 /// // JSR $C000
+/// // BRK
+/// // LDA #$05
 /// // BRK
 /// cpu.load_and_run(&[0xA9, 0x05, 0x20, 0x00, 0xC0, 0x00])
 ///     .unwrap();
@@ -68,15 +70,16 @@ pub fn jsr(cpu: &mut Cpu, mode: AddressingMode) {
 /// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$05
-/// // JSR $8006
+/// // JSR $0603
+/// // LDA #$01
 /// // BRK
 /// // SEI
 /// // RTS
 /// cpu.load_and_run(&[0xA9, 0x05, 0x20, 0x06, 0x80, 0x00, 0x78, 0x60])
 ///     .unwrap();
 ///
-/// assert_eq!(cpu.reg_a, 0x05);
-/// assert_eq!(cpu.pc, 0x8007);
+/// assert_eq!(cpu.reg_a, 0x01);
+/// assert_eq!(cpu.pc, 0x0600);
 /// assert_eq!(cpu.bus.mem_read(0x01FF), 0x80);
 /// assert_eq!(cpu.bus.mem_read(0x01FE), 0x05);
 /// assert_eq!(cpu.status, Status::INTERRUPT_DISABLE | Status::BREAK);

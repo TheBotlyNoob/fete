@@ -14,9 +14,11 @@ use crate::cpu::{AddressingMode, Cpu, Status};
 ///
 /// // LDX #$05
 /// // TXS
+/// // LDX #$01
 /// // TSX
 /// // BRK
-/// cpu.load_and_run(&[0xA2, 0x05, 0x9A, 0xBA, 0x00]).unwrap();
+/// cpu.load_and_run(&[0xA2, 0x05, 0x9A, 0xA2, 0x01, 0xBA, 0x00])
+///     .unwrap();
 ///
 /// assert_eq!(cpu.reg_x, 0x05);
 /// assert_eq!(cpu.status, Status::BREAK);
@@ -67,7 +69,7 @@ pub fn txs(cpu: &mut Cpu, _mode: AddressingMode) {
 /// cpu.load_and_run(&[0xA9, 0x05, 0x48, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.pop(), 0x05);
-/// assert_eq!(cpu.sp, 0xFE);
+/// assert_eq!(cpu.sp, Cpu::STACK_RESET);
 /// ```
 pub fn pha(cpu: &mut Cpu, _mode: AddressingMode) {
     cpu.push(cpu.reg_a);
@@ -79,7 +81,7 @@ pub fn pha(cpu: &mut Cpu, _mode: AddressingMode) {
 /// ```
 /// # use pretty_assertions::assert_eq;
 /// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
-/// use fete::cpu::{Cpu, Status, STACK_RESET};
+/// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();
 /// # let bus = Bus::new(Rom::new(&rom).unwrap());
@@ -94,7 +96,7 @@ pub fn pha(cpu: &mut Cpu, _mode: AddressingMode) {
 ///     .unwrap();
 ///
 /// assert_eq!(cpu.reg_a, 0x05);
-/// assert_eq!(cpu.sp,);
+/// assert_eq!(cpu.sp, Cpu::STACK_RESET);
 /// assert_eq!(cpu.status, Status::BREAK);
 /// ```
 pub fn pla(cpu: &mut Cpu, _mode: AddressingMode) {
@@ -121,10 +123,10 @@ pub fn pla(cpu: &mut Cpu, _mode: AddressingMode) {
 /// cpu.load_and_run(&[0x78, 0x08, 0x00]).unwrap();
 ///
 /// assert_eq!(
-///     cpu.bus.mem_read(0x01FF),
-///     (Status::INTERRUPT_DISABLE | Status::BREAK | Status::UNUSED).bits()
+///     Status::from_bits_truncate(cpu.pop()),
+///     Status::INTERRUPT_DISABLE | Status::BREAK | Status::UNUSED
 /// );
-/// assert_eq!(cpu.sp, 0xFE);
+/// assert_eq!(cpu.sp, Cpu::STACK_RESET);
 /// ```
 pub fn php(cpu: &mut Cpu, _mode: AddressingMode) {
     cpu.push((cpu.status | Status::BREAK | Status::UNUSED).bits());
@@ -153,7 +155,7 @@ pub fn php(cpu: &mut Cpu, _mode: AddressingMode) {
 ///     cpu.status,
 ///     Status::INTERRUPT_DISABLE | Status::BREAK | Status::UNUSED
 /// );
-/// assert_eq!(cpu.sp, 0xFF);
+/// assert_eq!(cpu.sp, Cpu::STACK_RESET);
 /// ```
 pub fn plp(cpu: &mut Cpu, _mode: AddressingMode) {
     let val = cpu.pop();

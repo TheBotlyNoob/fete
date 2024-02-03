@@ -14,13 +14,15 @@ pub struct Bus<'rom> {
 }
 
 impl<'rom> Bus<'rom> {
-    pub fn new(rom: Rom<'rom>) -> Self {
+    #[must_use]
+    pub const fn new(rom: Rom<'rom>) -> Self {
         Self {
             vram: [0; 2048],
             rom,
         }
     }
 
+    #[must_use]
     pub fn mirror(&self, addr: u16) -> Option<&u8> {
         // SAFETY: all ptrs come from valid references.
         unsafe { Some(&*self.mirror_addr(addr)?.as_ptr()) }
@@ -39,16 +41,16 @@ impl<'rom> Bus<'rom> {
             }
             PPU_REGISTERS..=PPU_REGISTERS_MIRRORS_END => {
                 let _mirror_down_addr = addr & 0b0010_0000_0000_0111;
-                // todo!("PPU is not supported yet")
-                unsafe {
-                    std::hint::unreachable_unchecked();
-                }
+                todo!("PPU is not supported yet")
             }
             _ => None,
         }
     }
 
-    /// Reads a byte from memory, _without_ incrementing the program counter.
+    /// Reads a byte from memory.
+    /// # WARNING
+    ///
+    /// This does not increment the program counter; use [`Cpu::take`](crate::cpu::Cpu::take) for that.
     #[must_use]
     pub fn mem_read(&self, addr: u16) -> u8 {
         if let Some(&val) = self.mirror(addr) {
@@ -65,11 +67,17 @@ impl<'rom> Bus<'rom> {
             *v = val;
         } else {
             log::warn!("ignoring memory write at: {addr:#02x}");
+
+            todo!();
         }
     }
 
     #[must_use]
-    /// Reads a little-endian, 16-bit number from memory, _without_ incrementing the program counter.
+    /// Reads a little-endian, 16-bit number from memory.
+    ///
+    /// # WARNING
+    ///
+    /// This does not increment the program counter; use [`Cpu::take_u16`](crate::cpu::Cpu::take_u16) for that.
     pub fn mem_read_u16(&self, addr: u16) -> u16 {
         let lo = self.mem_read(addr);
         let hi = self.mem_read(addr + 1);

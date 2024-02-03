@@ -97,7 +97,7 @@ pub fn ldy(cpu: &mut Cpu, mode: AddressingMode) {
 /// // STA $8000
 /// // BRK
 /// cpu.load_and_run(&[0xA9, 0x05, 0x8D, 0x00, 0x80, 0x00])
-///     .unwrap(); // keep in mind that the 16-bit address is stored in little-endian
+///     .unwrap();
 ///
 /// assert_eq!(cpu.bus.mem_read(0x8000), 0x05);
 /// ```
@@ -122,7 +122,7 @@ pub fn sta(cpu: &mut Cpu, mode: AddressingMode) {
 /// // STX $8000
 /// // BRK
 /// cpu.load_and_run(&[0xA2, 0x05, 0x8E, 0x00, 0x80, 0x00])
-///     .unwrap(); // keep in mind that the 16-bit address is stored in little-endian
+///     .unwrap();
 ///
 /// assert_eq!(cpu.bus.mem_read(0x8000), 0x05);
 /// ```
@@ -147,11 +147,12 @@ pub fn stx(cpu: &mut Cpu, mode: AddressingMode) {
 /// // STY $8000
 /// // BRK
 /// cpu.load_and_run(&[0xA0, 0x05, 0x8C, 0x00, 0x80, 0x00])
-///     .unwrap(); // keep in mind that the 16-bit address is stored in little-endian
+///     .unwrap();
 ///
 /// assert_eq!(cpu.bus.mem_read(0x8000), 0x05);
 /// ```
 pub fn sty(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
+
     cpu.bus.mem_write(addr, cpu.reg_y);
 }

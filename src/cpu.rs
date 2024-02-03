@@ -3,9 +3,6 @@ use snafu::prelude::*;
 
 use crate::bus::Bus;
 
-pub const STACK: u16 = 0x0100;
-pub const STACK_RESET: u8 = 0xFD;
-
 #[derive(Snafu)]
 pub enum Error {
     #[snafu(display("invalid opcode: {:#02x}", opcode))]
@@ -169,6 +166,9 @@ pub struct Cpu<'rom> {
 }
 
 impl<'rom> Cpu<'rom> {
+    pub const STACK: u16 = 0x0100;
+    pub const STACK_RESET: u8 = 0xFD;
+
     /// Creates a new CPU with the default state.
     #[must_use]
     pub fn new(bus: Bus<'rom>) -> Self {
@@ -177,7 +177,7 @@ impl<'rom> Cpu<'rom> {
             reg_x: 0,
             reg_y: 0,
             status: Status::default(),
-            sp: STACK_RESET,
+            sp: Self::STACK_RESET,
             pc: bus.mem_read_u16(0xFFFC),
             bus,
         }
@@ -228,6 +228,7 @@ impl<'rom> Cpu<'rom> {
     /// Loads the given program into memory, and sets the program counter to the start of the program.
     pub fn load(&mut self, prog: &[u8]) -> Result<(), Error> {
         for (i, &b) in prog.iter().enumerate().take(usize::from(u16::MAX)) {
+            println!("addr: {:#x?}: {b:#x?}", 0x0600 + i);
             self.bus.mem_write(0x0600 + i as u16, b);
         }
         self.pc = self.bus.mem_read_u16(0xFFFC);
@@ -241,6 +242,9 @@ impl<'rom> Cpu<'rom> {
     pub fn load_and_run(&mut self, prog: &[u8]) -> Result<(), Error> {
         self.load(prog)?;
         self.reset();
+        if dbg!(self.pc) == 0 {
+            self.pc = 0x0600;
+        }
         self.run()
     }
 
@@ -254,15 +258,13 @@ impl<'rom> Cpu<'rom> {
     ///
     /// # Examples
     /// ```
-    /// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
-/// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+    /// # use fete::{bus::Bus, rom::Rom, test::test_rom};
+    /// # use pretty_assertions::assert_eq;
     /// use fete::cpu::{Cpu, Status};
     ///
     /// # let rom = test_rom();
-/// # let bus = Bus::new(&rom);
-/// let mut cpu = Cpu::new(bus);
+    /// # let bus = Bus::new(Rom::new(&rom).unwrap());
+    /// let mut cpu = Cpu::new(bus);
     ///
     /// cpu.zero_and_neg_flags(0);
     /// assert_eq!(cpu.status, Status::ZERO);
@@ -308,7 +310,13 @@ impl<'rom> Cpu<'rom> {
         let opcode_info = crate::opcode::OPCODES.get(&opcode);
 
         if let Some(opcode) = opcode_info {
-            println!("{:#02x} {} ({:#?})", self.pc, opcode.name, opcode.mode);
+            println!(
+                "{:#02x} {:#x} ({}) ({:#?})",
+                self.pc - 1,
+                opcode.code,
+                opcode.name,
+                opcode.mode
+            );
             (opcode.op)(self, opcode.mode);
         } else {
             return Err(Error::InvalidOpcode {
@@ -323,7 +331,7 @@ impl<'rom> Cpu<'rom> {
     /// Pushes a byte onto the stack.
     pub fn push(&mut self, val: u8) {
         self.bus
-            .mem_write(STACK.saturating_add(u16::from(self.sp)), val);
+            .mem_write(Self::STACK.saturating_add(u16::from(self.sp)), val);
         self.sp = self.sp.wrapping_sub(1);
     }
 
@@ -337,7 +345,8 @@ impl<'rom> Cpu<'rom> {
     /// Pops a value from the stack.
     pub fn pop(&mut self) -> u8 {
         self.sp = self.sp.wrapping_add(1);
-        self.bus.mem_read(STACK.saturating_add(u16::from(self.sp)))
+        self.bus
+            .mem_read(Self::STACK.saturating_add(u16::from(self.sp)))
     }
 
     /// Pops a little-endian, 16-bit number from the stack.
@@ -348,13 +357,13 @@ impl<'rom> Cpu<'rom> {
     }
 
     /// Takes the next byte from memory, and increments the program counter.
-    fn take(&mut self) -> u8 {
+    pub fn take(&mut self) -> u8 {
         let byte = self.bus.mem_read(self.pc);
         self.pc = self.pc.wrapping_add(1);
         byte
     }
     /// Takes the next little-endian, 16-bit number from memory, and increments the program counter.
-    fn take_u16(&mut self) -> u16 {
+    pub fn take_u16(&mut self) -> u16 {
         let num = self.bus.mem_read_u16(self.pc);
         self.pc = self.pc.wrapping_add(2);
         num
@@ -364,7 +373,7 @@ impl<'rom> Cpu<'rom> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::rom::{common_test::test_rom, Rom};
+    use crate::{rom::Rom, test::test_rom};
     use pretty_assertions::assert_eq;
     use test_log::test;
 
