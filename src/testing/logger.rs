@@ -1,9 +1,6 @@
-//! copy-paste of simple logger; no deps work with doctests for some reason.
-//! feature-blocked structs and functions are removed.
+//! copy-paste and stripped down of `simple_logger`; no deps work with doctests for some reason.
 //!
 //! A logger that prints all messages with a simple, readable output format.
-//!
-//! Optional features include timestamps, colored output and logging to stderr.
 //!
 //! ```ignore
 //! simple_logger::SimpleLogger::new().env().init().unwrap();
@@ -13,25 +10,13 @@
 //!
 //! Some shortcuts are available for common use cases.
 //!
-//! Just initialize logging without any configuration:
-//!
-//! ```ignore
-//! simple_logger::init().unwrap();
-//! ```
-//!
 //! Set the log level from the `RUST_LOG` environment variable:
 //!
 //! ```ignore
 //! simple_logger::init_with_env().unwrap();
 //! ```
-//!
-//! Hardcode a default log level:
-//!
-//! ```ignore
-//! simple_logger::init_with_level(log::Level::Warn).unwrap();
-//! ```
 
-use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
+use log::{LevelFilter, Log, Metadata, Record, SetLoggerError};
 use std::str::FromStr;
 
 /// Implements [`Log`] and a set of simple builder methods for configuration.
@@ -88,63 +73,6 @@ impl Simple {
             .and_then(Result::ok)
             .unwrap_or(self.default_level);
 
-        self
-    }
-
-    /// Set the 'default' log level.
-    ///
-    /// You can override the default level for specific modules and their sub-modules using [`with_module_level`]
-    ///
-    /// This must be called before [`env`]. If called after [`env`], it will override the value loaded from the environment.
-    ///
-    /// [`env`]: #method.env
-    /// [`with_module_level`]: #method.with_module_level
-    #[must_use = "You must call init() to begin logging"]
-    pub const fn with_level(mut self, level: LevelFilter) -> Self {
-        self.default_level = level;
-        self
-    }
-
-    /// Override the log level for some specific modules.
-    ///
-    /// This sets the log level of a specific module and all its sub-modules.
-    /// When both the level for a parent module as well as a child module are set,
-    /// the more specific value is taken. If the log level for the same module is
-    /// specified twice, the resulting log level is implementation defined.
-    ///
-    /// # Examples
-    ///
-    /// Silence an overly verbose crate:
-    ///
-    /// ```ignore
-    /// use log::LevelFilter;
-    /// use simple_logger::SimpleLogger;
-    ///
-    /// SimpleLogger::new()
-    ///     .with_module_level("chatty_dependency", LevelFilter::Warn)
-    ///     .init()
-    ///     .unwrap();
-    /// ```
-    ///
-    /// Disable logging for all dependencies:
-    ///
-    /// ```ignore
-    /// use log::LevelFilter;
-    /// use simple_logger::SimpleLogger;
-    ///
-    /// SimpleLogger::new()
-    ///     .with_level(LevelFilter::Off)
-    ///     .with_module_level("my_crate", LevelFilter::Info)
-    ///     .init()
-    ///     .unwrap();
-    /// ```
-    //
-    // This method *must* sort `module_levels` for the [`enabled`](#method.enabled) method to work correctly.
-    #[must_use = "You must call init() to begin logging"]
-    pub fn with_module_level(mut self, target: &str, level: LevelFilter) -> Self {
-        self.module_levels.push((target.to_string(), level));
-        self.module_levels
-            .sort_by_key(|(name, _level)| name.len().wrapping_neg());
         self
     }
 
@@ -206,25 +134,9 @@ impl Log for Simple {
     fn flush(&self) {}
 }
 
-/// Initialise the logger with its default configuration.
-///
-/// Log messages will not be filtered.
-/// The `RUST_LOG` environment variable is not used.
-pub fn init() -> Result<(), SetLoggerError> {
-    Simple::new().init()
-}
-
 /// Initialise the logger with the `RUST_LOG` environment variable.
 ///
 /// Log messages will be filtered based on the `RUST_LOG` environment variable.
 pub fn init_with_env() -> Result<(), SetLoggerError> {
     Simple::new().env().init()
-}
-
-/// Initialise the logger with a specific log level.
-///
-/// Log messages below the given [`Level`] will be filtered.
-/// The `RUST_LOG` environment variable is not used.
-pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
-    Simple::new().with_level(level.to_level_filter()).init()
 }

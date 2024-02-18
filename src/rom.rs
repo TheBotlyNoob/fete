@@ -32,6 +32,10 @@ pub struct Rom<'rom> {
 }
 
 impl<'a> Rom<'a> {
+    /// Parses an iNES 1.0 file.
+    ///
+    /// # Errors
+    /// Errors if the file is iNES version 2.0, or if it is invalid.
     pub fn new(raw: &'a [u8]) -> Result<Self, Error> {
         let mut reader = untrusted::Reader::new(untrusted::Input::from(raw));
 

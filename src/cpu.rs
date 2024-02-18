@@ -190,7 +190,6 @@ impl<'rom> Cpu<'rom> {
 
     /// Gets the address at the current program count, using the given [`AddressingMode`]. Increments the program count as needed.
     pub fn get_op_addr(&mut self, mode: AddressingMode) -> u16 {
-        #[allow(clippy::match_wildcard_for_single_variants)] // that's the point
         match mode {
             AddressingMode::Immediate => {
                 let prev_pc = self.pc;
@@ -226,13 +225,15 @@ impl<'rom> Cpu<'rom> {
     }
 
     /// Loads the given program into memory, and sets the program counter to the start of the program.
-    pub fn load(&mut self, prog: &[u8]) -> Result<(), Error> {
+    ///
+    /// The program is truncated to `u16::MAX`.
+    pub fn load(&mut self, prog: &[u8]) {
         for (i, &b) in prog.iter().enumerate().take(usize::from(u16::MAX)) {
             println!("addr: {:#x?}: {b:#x?}", 0x0600 + i);
+            #[allow(clippy::cast_possible_truncation)] // already truncated to u16::MAX
             self.bus.mem_write(0x0600 + i as u16, b);
         }
         self.pc = self.bus.mem_read_u16(0xFFFC);
-        Ok(())
     }
 
     /// Loads the given program into memory, resets the CPU, and runs the program.
@@ -240,7 +241,7 @@ impl<'rom> Cpu<'rom> {
     /// # Errors
     /// Returns an [`Error::InvalidOpcode`] if an invalid opcode is encountered.
     pub fn load_and_run(&mut self, prog: &[u8]) -> Result<(), Error> {
-        self.load(prog)?;
+        self.load(prog);
         self.reset();
         if self.pc == 0 {
             self.pc = 0x0600;

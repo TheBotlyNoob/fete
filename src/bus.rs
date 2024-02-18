@@ -1,11 +1,6 @@
-use std::ptr::NonNull;
+use std::{ops::RangeInclusive, ptr::NonNull};
 
 use crate::rom::Rom;
-
-const RAM: u16 = 0x0000;
-const RAM_MIRRORS_END: u16 = 0x1FFF;
-const PPU_REGISTERS: u16 = 0x2000;
-const PPU_REGISTERS_MIRRORS_END: u16 = 0x3FFF;
 
 #[derive(Clone)]
 pub struct Bus<'rom> {
@@ -14,6 +9,10 @@ pub struct Bus<'rom> {
 }
 
 impl<'rom> Bus<'rom> {
+    pub const RAM_RANGE: RangeInclusive<u16> = (0x0000..=0x1FFF);
+    pub const ROM_RANGE: RangeInclusive<u16> = (0x8000..=0xFFFF);
+    pub const PPU_REGISTER_RANGE: RangeInclusive<u16> = (0x2000..=0x3FFF);
+
     #[must_use]
     pub const fn new(rom: Rom<'rom>) -> Self {
         Self {
@@ -34,16 +33,27 @@ impl<'rom> Bus<'rom> {
     }
 
     fn mirror_addr(&self, addr: u16) -> Option<NonNull<u8>> {
-        match addr {
-            RAM..=RAM_MIRRORS_END => {
-                let mirror_down_addr = addr & 0b0000_0111_1111_1111;
-                self.vram.get(mirror_down_addr as usize).map(NonNull::from)
-            }
-            PPU_REGISTERS..=PPU_REGISTERS_MIRRORS_END => {
-                let _mirror_down_addr = addr & 0b0010_0000_0000_0111;
-                todo!("PPU is not supported yet")
-            }
-            _ => None,
+        if Self::RAM_RANGE.contains(&addr) {
+            let mirror_down_addr = addr & 0b0000_0111_1111_1111;
+            self.vram.get(mirror_down_addr as usize).map(NonNull::from)
+        } else if Self::ROM_RANGE.contains(&addr) {
+            let mirror_down_addr = {
+                let addr = addr - Self::ROM_RANGE.start();
+                if self.rom.prg_rom.len() == 0x4000 && addr >= 0x4000 {
+                    addr % 0x4000 // mirror, if needed
+                } else {
+                    addr
+                }
+            };
+            self.rom
+                .prg_rom
+                .get(mirror_down_addr as usize)
+                .map(NonNull::from)
+        } else if Self::PPU_REGISTER_RANGE.contains(&addr) {
+            // let _mirror_down_addr = addr & 0b0010_0000_0000_0111;
+            todo!("PPU is not supported yet")
+        } else {
+            None
         }
     }
 
@@ -63,12 +73,15 @@ impl<'rom> Bus<'rom> {
 
     /// Writes a byte to memory.
     pub fn mem_write(&mut self, addr: u16, val: u8) {
+        if Self::ROM_RANGE.contains(&addr) {
+            log::warn!("attempt to write to cartridge ROM: {addr:#02x}");
+            return;
+        }
+
         if let Some(v) = self.mirror_mut(addr) {
             *v = val;
         } else {
             log::warn!("ignoring memory write at: {addr:#02x}");
-
-            todo!();
         }
     }
 
