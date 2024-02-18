@@ -229,11 +229,14 @@ impl<'rom> Cpu<'rom> {
     /// The program is truncated to `u16::MAX`.
     pub fn load(&mut self, prog: &[u8]) {
         for (i, &b) in prog.iter().enumerate().take(usize::from(u16::MAX)) {
-            println!("addr: {:#x?}: {b:#x?}", 0x0600 + i);
+            log::info!("addr: {:#x?}: {b:#x?}", 0x0600 + i);
             #[allow(clippy::cast_possible_truncation)] // already truncated to u16::MAX
             self.bus.mem_write(0x0600 + i as u16, b);
         }
-        self.pc = self.bus.mem_read_u16(0xFFFC);
+        self.pc = match self.bus.mem_read_u16(0xFFFC) {
+            0 => 0x0600,
+            pc => pc,
+        };
     }
 
     /// Loads the given program into memory, resets the CPU, and runs the program.
@@ -241,11 +244,8 @@ impl<'rom> Cpu<'rom> {
     /// # Errors
     /// Returns an [`Error::InvalidOpcode`] if an invalid opcode is encountered.
     pub fn load_and_run(&mut self, prog: &[u8]) -> Result<(), Error> {
-        self.load(prog);
         self.reset();
-        if self.pc == 0 {
-            self.pc = 0x0600;
-        }
+        self.load(prog);
         self.run()
     }
 
@@ -311,7 +311,7 @@ impl<'rom> Cpu<'rom> {
         let opcode_info = crate::opcode::OPCODES.get(&opcode);
 
         if let Some(opcode) = opcode_info {
-            println!(
+            log::info!(
                 "{:#02x} {:#x} ({}) ({:#?})",
                 self.pc - 1,
                 opcode.code,
@@ -382,7 +382,6 @@ mod test {
         let rom = test_rom();
         let bus = Bus::new(Rom::new(&rom).unwrap());
         let mut cpu = Cpu::new(bus);
-        cpu.bus.mem_write(0x0000, 0x05);
 
         assert_eq!(cpu.get_op_addr(AddressingMode::Immediate), 0x0000);
         assert_eq!(cpu.pc, 0x0001);
@@ -393,6 +392,7 @@ mod test {
         let rom = test_rom();
         let bus = Bus::new(Rom::new(&rom).unwrap());
         let mut cpu = Cpu::new(bus);
+
         cpu.bus.mem_write(0x0000, 0x05);
 
         assert_eq!(cpu.get_op_addr(AddressingMode::ZeroPage), 0x05);

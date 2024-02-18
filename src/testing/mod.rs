@@ -54,13 +54,14 @@ pub fn create_rom(rom: TestRom) -> Vec<u8> {
     result
 }
 
+#[must_use = "does nothing without parsing it into a Rom"]
 pub fn test_rom() -> Vec<u8> {
     create_rom(TestRom {
         header: vec![
             0x4E, 0x45, 0x53, 0x1A, 0x02, 0x01, 0x31, 00, 00, 00, 00, 00, 00, 00, 00, 00,
         ],
         trainer: None,
-        pgp_rom: vec![1; 2 * PRG_ROM_PAGE_SIZE],
-        chr_rom: vec![2; 1 * CHR_ROM_PAGE_SIZE],
+        pgp_rom: vec![0; 2 * PRG_ROM_PAGE_SIZE],
+        chr_rom: vec![0; CHR_ROM_PAGE_SIZE],
     })
 }
