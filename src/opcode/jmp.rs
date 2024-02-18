@@ -5,7 +5,7 @@ use crate::cpu::{AddressingMode, Cpu};
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();
@@ -33,7 +33,7 @@ pub fn jmp(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();
@@ -62,7 +62,7 @@ pub fn jsr(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();
@@ -70,18 +70,17 @@ pub fn jsr(cpu: &mut Cpu, mode: AddressingMode) {
 /// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$05
-/// // JSR $0603
+/// // JSR $0608
 /// // LDA #$01
 /// // BRK
 /// // SEI
 /// // RTS
-/// cpu.load_and_run(&[0xA9, 0x05, 0x20, 0x06, 0x80, 0x00, 0x78, 0x60])
+/// cpu.load_and_run(&[0xA9, 0x05, 0x20, 0x08, 0x06, 0xA9, 0x01, 0x00, 0x78, 0x60])
 ///     .unwrap();
 ///
 /// assert_eq!(cpu.reg_a, 0x01);
-/// assert_eq!(cpu.pc, 0x0600);
-/// assert_eq!(cpu.bus.mem_read(0x01FF), 0x80);
-/// assert_eq!(cpu.bus.mem_read(0x01FE), 0x05);
+/// assert_eq!(cpu.pc, 0x0609);
+/// assert_eq!(cpu.bus.mem_read_u16(0x01FC), 0x0605); // not using pop() b/c already pop'd by RTS
 /// assert_eq!(cpu.status, Status::INTERRUPT_DISABLE | Status::BREAK);
 /// ```
 pub fn rts(cpu: &mut Cpu, _mode: AddressingMode) {

@@ -5,7 +5,7 @@ use crate::cpu::{AddressingMode, Cpu, Status};
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::Cpu;
 ///
 /// # let rom = test_rom();
@@ -31,7 +31,7 @@ pub fn and(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::Cpu;
 ///
 /// # let rom = test_rom();
@@ -57,7 +57,7 @@ pub fn eor(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::Cpu;
 ///
 /// # let rom = test_rom();
@@ -84,7 +84,7 @@ pub fn ora(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();

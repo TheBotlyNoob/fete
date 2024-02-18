@@ -5,7 +5,7 @@ use crate::cpu::{AddressingMode, Cpu};
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();
@@ -31,7 +31,7 @@ pub fn lda(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();
@@ -58,7 +58,7 @@ pub fn ldx(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();
@@ -85,7 +85,7 @@ pub fn ldy(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::Cpu;
 ///
 /// # let rom = test_rom();
@@ -94,12 +94,12 @@ pub fn ldy(cpu: &mut Cpu, mode: AddressingMode) {
 /// cpu.reg_a = 0x05;
 ///
 /// // LDA #$05
-/// // STA $8000
+/// // STA $00FF
 /// // BRK
-/// cpu.load_and_run(&[0xA9, 0x05, 0x8D, 0x00, 0x80, 0x00])
+/// cpu.load_and_run(&[0xA9, 0x05, 0x8D, 0xFF, 0x00, 0x00])
 ///     .unwrap();
 ///
-/// assert_eq!(cpu.bus.mem_read(0x8000), 0x05);
+/// assert_eq!(cpu.bus.mem_read(0x00FF), 0x05);
 /// ```
 pub fn sta(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
@@ -111,7 +111,7 @@ pub fn sta(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::Cpu;
 ///
 /// # let rom = test_rom();
@@ -119,12 +119,12 @@ pub fn sta(cpu: &mut Cpu, mode: AddressingMode) {
 /// let mut cpu = Cpu::new(bus);
 ///
 /// // LDX #$05
-/// // STX $8000
+/// // STX $00FF
 /// // BRK
-/// cpu.load_and_run(&[0xA2, 0x05, 0x8E, 0x00, 0x80, 0x00])
+/// cpu.load_and_run(&[0xA2, 0x05, 0x8E, 0xFF, 0x00, 0x00])
 ///     .unwrap();
 ///
-/// assert_eq!(cpu.bus.mem_read(0x8000), 0x05);
+/// assert_eq!(cpu.bus.mem_read(0x00FF), 0x05);
 /// ```
 pub fn stx(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);
@@ -136,7 +136,7 @@ pub fn stx(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::Cpu;
 ///
 /// # let rom = test_rom();
@@ -144,12 +144,12 @@ pub fn stx(cpu: &mut Cpu, mode: AddressingMode) {
 /// let mut cpu = Cpu::new(bus);
 ///
 /// // LDY #$05
-/// // STY $8000
+/// // STY $00FF
 /// // BRK
-/// cpu.load_and_run(&[0xA0, 0x05, 0x8C, 0x00, 0x80, 0x00])
+/// cpu.load_and_run(&[0xA0, 0x05, 0x8C, 0xFF, 0x00, 0x00])
 ///     .unwrap();
 ///
-/// assert_eq!(cpu.bus.mem_read(0x8000), 0x05);
+/// assert_eq!(cpu.bus.mem_read(0x00FF), 0x05);
 /// ```
 pub fn sty(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);

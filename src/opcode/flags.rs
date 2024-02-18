@@ -5,7 +5,7 @@ use crate::cpu::{AddressingMode, Cpu, Status};
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();
@@ -27,7 +27,7 @@ pub fn sec(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();
@@ -50,7 +50,7 @@ pub fn clc(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();
@@ -72,7 +72,7 @@ pub fn sed(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();
@@ -95,7 +95,7 @@ pub fn cld(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();
@@ -117,7 +117,7 @@ pub fn sei(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();
@@ -140,7 +140,7 @@ pub fn cli(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();

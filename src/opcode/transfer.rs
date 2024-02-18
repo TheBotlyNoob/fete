@@ -5,7 +5,7 @@ use crate::cpu::{AddressingMode, Cpu};
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();
@@ -30,7 +30,7 @@ pub fn tax(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();
@@ -55,7 +55,7 @@ pub fn tay(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();
@@ -79,7 +79,7 @@ pub fn txa(cpu: &mut Cpu, _mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::{Cpu, Status};
 ///
 /// # let rom = test_rom();

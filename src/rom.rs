@@ -82,7 +82,7 @@ impl<'a> Rom<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::test::{create_rom, TestRom};
+    use crate::testing::{create_rom, TestRom};
     use pretty_assertions::assert_eq;
 
     #[test]

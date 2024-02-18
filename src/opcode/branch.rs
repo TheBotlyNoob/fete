@@ -12,7 +12,7 @@ fn branch_if(cpu: &mut Cpu, mode: AddressingMode, cond: bool) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::Cpu;
 ///
 /// # let rom = test_rom();
@@ -39,7 +39,7 @@ pub fn bcc(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::Cpu;
 ///
 /// # let rom = test_rom();
@@ -51,7 +51,7 @@ pub fn bcc(cpu: &mut Cpu, mode: AddressingMode) {
 /// // BRK
 /// cpu.load_and_run(&[0x38, 0xB0, 0x02, 0x00]).unwrap();
 ///
-/// assert_eq!(cpu.pc, 0x8007);
+/// assert_eq!(cpu.pc, 0x0607);
 /// ```
 pub fn bcs(cpu: &mut Cpu, mode: AddressingMode) {
     branch_if(cpu, mode, cpu.status.contains(Status::CARRY));
@@ -62,7 +62,7 @@ pub fn bcs(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::Cpu;
 ///
 /// # let rom = test_rom();
@@ -74,7 +74,7 @@ pub fn bcs(cpu: &mut Cpu, mode: AddressingMode) {
 /// // BRK
 /// cpu.load_and_run(&[0xA9, 0x00, 0xF0, 0x02, 0x00]).unwrap();
 ///
-/// assert_eq!(cpu.pc, 0x8008);
+/// assert_eq!(cpu.pc, 0x0608);
 /// ```
 pub fn beq(cpu: &mut Cpu, mode: AddressingMode) {
     branch_if(cpu, mode, cpu.status.contains(Status::ZERO));
@@ -85,7 +85,7 @@ pub fn beq(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::Cpu;
 ///
 /// # let rom = test_rom();
@@ -97,7 +97,7 @@ pub fn beq(cpu: &mut Cpu, mode: AddressingMode) {
 /// // BRK
 /// cpu.load_and_run(&[0xA9, 0x01, 0xD0, 0x02, 0x00]).unwrap();
 ///
-/// assert_eq!(cpu.pc, 0x8008);
+/// assert_eq!(cpu.pc, 0x0608);
 /// ```
 pub fn bne(cpu: &mut Cpu, mode: AddressingMode) {
     branch_if(cpu, mode, !cpu.status.contains(Status::ZERO));
@@ -108,7 +108,7 @@ pub fn bne(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::Cpu;
 ///
 /// # let rom = test_rom();
@@ -120,7 +120,7 @@ pub fn bne(cpu: &mut Cpu, mode: AddressingMode) {
 /// // BRK
 /// cpu.load_and_run(&[0xA9, 0x80, 0x30, 0x02, 0x00]).unwrap();
 ///
-/// assert_eq!(cpu.pc, 0x8008);
+/// assert_eq!(cpu.pc, 0x0608);
 /// ```
 pub fn bmi(cpu: &mut Cpu, mode: AddressingMode) {
     branch_if(cpu, mode, cpu.status.contains(Status::NEGATIVE));
@@ -131,7 +131,7 @@ pub fn bmi(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::Cpu;
 ///
 /// # let rom = test_rom();
@@ -143,7 +143,7 @@ pub fn bmi(cpu: &mut Cpu, mode: AddressingMode) {
 /// // BRK
 /// cpu.load_and_run(&[0xA9, 0x01, 0x10, 0x02, 0x00]).unwrap();
 ///
-/// assert_eq!(cpu.pc, 0x8008);
+/// assert_eq!(cpu.pc, 0x0608);
 /// ```
 pub fn bpl(cpu: &mut Cpu, mode: AddressingMode) {
     branch_if(cpu, mode, !cpu.status.contains(Status::NEGATIVE));
@@ -154,7 +154,7 @@ pub fn bpl(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::Cpu;
 ///
 /// # let rom = test_rom();
@@ -172,7 +172,7 @@ pub fn bpl(cpu: &mut Cpu, mode: AddressingMode) {
 /// ])
 /// .unwrap();
 ///
-/// assert_eq!(cpu.pc, 0x800E);
+/// assert_eq!(cpu.pc, 0x060E);
 /// ```
 pub fn bvs(cpu: &mut Cpu, mode: AddressingMode) {
     branch_if(cpu, mode, cpu.status.contains(Status::OVERFLOW));
@@ -183,7 +183,7 @@ pub fn bvs(cpu: &mut Cpu, mode: AddressingMode) {
 /// # Examples
 /// ```
 /// # use pretty_assertions::assert_eq;
-/// # use fete::{bus::Bus, rom::{Rom, common_test::test_rom}};
+/// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
 /// use fete::cpu::Cpu;
 ///
 /// # let rom = test_rom();
@@ -195,7 +195,7 @@ pub fn bvs(cpu: &mut Cpu, mode: AddressingMode) {
 /// // BRK
 /// cpu.load_and_run(&[0xB8, 0x50, 0x02, 0x00]).unwrap();
 ///
-/// assert_eq!(cpu.pc, 0x8007);
+/// assert_eq!(cpu.pc, 0x0607);
 /// ```
 pub fn bvc(cpu: &mut Cpu, mode: AddressingMode) {
     branch_if(cpu, mode, !cpu.status.contains(Status::OVERFLOW));

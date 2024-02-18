@@ -9,5 +9,4 @@ pub mod opcode;
 pub mod rom;
 
 #[cfg(any(test, fete_doctest))]
-#[allow(unused_imports)]
-pub mod test;
+pub mod testing;

@@ -242,7 +242,7 @@ impl<'rom> Cpu<'rom> {
     pub fn load_and_run(&mut self, prog: &[u8]) -> Result<(), Error> {
         self.load(prog)?;
         self.reset();
-        if dbg!(self.pc) == 0 {
+        if self.pc == 0 {
             self.pc = 0x0600;
         }
         self.run()
@@ -258,7 +258,7 @@ impl<'rom> Cpu<'rom> {
     ///
     /// # Examples
     /// ```
-    /// # use fete::{bus::Bus, rom::Rom, test::test_rom};
+    /// # use fete::{bus::Bus, rom::Rom, testing::test_rom};
     /// # use pretty_assertions::assert_eq;
     /// use fete::cpu::{Cpu, Status};
     ///
@@ -373,9 +373,8 @@ impl<'rom> Cpu<'rom> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{rom::Rom, test::test_rom};
+    use crate::{rom::Rom, testing::test_rom};
     use pretty_assertions::assert_eq;
-    use test_log::test;
 
     #[test]
     fn op_addr_immediate() {
