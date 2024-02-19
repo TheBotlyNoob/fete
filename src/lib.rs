@@ -1,4 +1,4 @@
-// #![no_std]
+#![cfg_attr(not(any(test, fete_doctest)), no_std)]
 #![feature(const_mut_refs)]
 #![warn(clippy::pedantic, clippy::nursery)]
 #![doc = include_str!("../README.md")]

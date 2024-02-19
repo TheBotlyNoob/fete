@@ -1,8 +1,7 @@
-use std::{ops::RangeInclusive, ptr::NonNull};
-
 use crate::rom::Rom;
+use core::{ops::RangeInclusive, ptr::NonNull};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Bus<'rom> {
     pub vram: [u8; 2048],
     pub rom: Rom<'rom>,

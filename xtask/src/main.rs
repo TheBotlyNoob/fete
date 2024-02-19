@@ -7,7 +7,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Command::new("test")
                 .about("tests fete- required for doctesting")
                 .arg(
-                    arg!(<args> ... "extra arguments to pass directly to `cargo test`").last(true),
+                    arg!(<args> ... "extra arguments to pass directly to `cargo test`")
+                        .last(true)
+                        .required(false),
                 ),
         )
         .get_matches();

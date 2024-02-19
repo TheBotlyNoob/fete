@@ -1,7 +1,6 @@
+use crate::bus::Bus;
 use bitflags::bitflags;
 use snafu::prelude::*;
-
-use crate::bus::Bus;
 
 #[derive(Snafu)]
 pub enum Error {
@@ -10,19 +9,12 @@ pub enum Error {
 }
 
 impl core::fmt::Debug for Error {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
-        struct DisplayAsDebug<T: core::fmt::Display>(pub T);
-        impl<T: core::fmt::Display> core::fmt::Debug for DisplayAsDebug<T> {
-            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
-                self.0.fmt(f)
-            }
-        }
-
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::InvalidOpcode { opcode, offset } => f
                 .debug_struct("InvalidOpcode")
-                .field("opcode", &DisplayAsDebug(format_args!("{opcode:#02x}")))
-                .field("offset", &DisplayAsDebug(format_args!("{offset:#02x}")))
+                .field("opcode", &format_args!("{opcode:#02x}"))
+                .field("offset", &format_args!("{offset:#02x}"))
                 .finish(),
         }
     }
@@ -42,7 +34,7 @@ bitflags! {
     ///  | +--------------- Overflow Flag
     ///  +----------------- Negative Flag
     /// ```
-    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+    #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
     pub struct Status: u8 {
         /// Carry flag.
         const CARRY             = 0b0000_0001;
@@ -69,6 +61,7 @@ impl Default for Status {
     }
 }
 
+#[derive(Clone)]
 pub struct Cpu<'rom> {
     pub reg_a: u8,
     pub reg_x: u8,
@@ -77,6 +70,20 @@ pub struct Cpu<'rom> {
     pub sp: u8,
     pub pc: u16,
     pub bus: Bus<'rom>,
+}
+
+impl<'rom> core::fmt::Debug for Cpu<'rom> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Cpu")
+            .field("reg_a", &format_args!("{:#02X}", self.reg_a))
+            .field("reg_x", &format_args!("{:#02X}", self.reg_x))
+            .field("reg_y", &format_args!("{:#02X}", self.reg_y))
+            .field("status", &self.status)
+            .field("sp", &format_args!("{:#02X}", self.sp))
+            .field("pc", &format_args!("{:#04X}", self.pc))
+            .field("bus", &"Bus { .. }")
+            .finish()
+    }
 }
 
 impl<'rom> Cpu<'rom> {
