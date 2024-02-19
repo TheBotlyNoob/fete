@@ -1,6 +1,6 @@
-pub const NES_TAG: [u8; 4] = [0x4E, 0x45, 0x53, 0x1A];
-pub const PRG_ROM_PAGE_SIZE: usize = 16384;
-pub const CHR_ROM_PAGE_SIZE: usize = 8192;
+pub const NES_TAG: [u8; 4] = [0x4E, 0x45, 0x53, 0x1A]; // NES^Z
+pub const PRG_ROM_PAGE_SIZE: usize = 16384; // 16KiB
+pub const CHR_ROM_PAGE_SIZE: usize = 8192; // 8KiB
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, snafu::Snafu)]
 pub enum Error {
@@ -66,6 +66,8 @@ impl<'a> Rom<'a> {
             (_, false) => Mirroring::Horizontal,
         };
 
+        let _padding = reader.read_bytes(5)?;
+
         let trainer = flags_6 & 0b0100 != 0;
         if trainer {
             reader.read_bytes(512)?;
@@ -99,14 +101,14 @@ mod test {
                 0x4E, 0x45, 0x53, 0x1A, 0x02, 0x01, 0x31, 00, 00, 00, 00, 00, 00, 00, 00, 00,
             ],
             trainer: None,
-            pgp_rom: vec![1; 2 * PRG_ROM_PAGE_SIZE],
+            prg_rom: vec![1; 2 * PRG_ROM_PAGE_SIZE],
             chr_rom: vec![2; CHR_ROM_PAGE_SIZE],
         });
 
         let rom = Rom::new(&test_rom).unwrap();
 
-        assert_eq!(rom.prg_rom, vec![1; 2 * PRG_ROM_PAGE_SIZE]);
-        assert_eq!(rom.chr_rom, vec![2; CHR_ROM_PAGE_SIZE]);
+        assert!(rom.prg_rom == vec![1; 2 * PRG_ROM_PAGE_SIZE]);
+        assert!(rom.chr_rom == vec![2; CHR_ROM_PAGE_SIZE]);
         assert_eq!(rom.mapper, 3);
         assert_eq!(rom.mirroring, Mirroring::Vertical);
     }
@@ -133,14 +135,14 @@ mod test {
                 00,
             ],
             trainer: Some(vec![0; 512]),
-            pgp_rom: vec![1; 2 * PRG_ROM_PAGE_SIZE],
+            prg_rom: vec![1; 2 * PRG_ROM_PAGE_SIZE],
             chr_rom: vec![2; CHR_ROM_PAGE_SIZE],
         });
 
         let rom: Rom = Rom::new(&test_rom).unwrap();
 
-        // assert_eq!(rom.chr_rom, vec![2; CHR_ROM_PAGE_SIZE]);
-        // assert_eq!(rom.prg_rom, vec![1; 2 * PRG_ROM_PAGE_SIZE]);
+        assert!(rom.prg_rom == vec![1; 2 * PRG_ROM_PAGE_SIZE]);
+        assert!(rom.chr_rom == vec![2; CHR_ROM_PAGE_SIZE]);
         assert_eq!(rom.mapper, 3);
         assert_eq!(rom.mirroring, Mirroring::Vertical);
     }
@@ -152,7 +154,7 @@ mod test {
                 0x4E, 0x45, 0x53, 0x1A, 0x01, 0x01, 0x31, 0x8, 00, 00, 00, 00, 00, 00, 00, 00,
             ],
             trainer: None,
-            pgp_rom: vec![1; PRG_ROM_PAGE_SIZE],
+            prg_rom: vec![1; PRG_ROM_PAGE_SIZE],
             chr_rom: vec![2; CHR_ROM_PAGE_SIZE],
         });
         let rom = Rom::new(&test_rom);
