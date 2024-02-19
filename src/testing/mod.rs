@@ -1,10 +1,11 @@
 mod logger;
 
 use crate::{
-    cpu::Cpu,
-    opcode::{OpCode, OPCODES},
+    cpu::{AddressingMode, Cpu},
+    opcode::OPCODES,
     rom::*,
 };
+use std::fmt::Write;
 
 #[used]
 #[doc(hidden)]
@@ -70,13 +71,68 @@ pub fn test_rom() -> Vec<u8> {
     })
 }
 
+fn trace_addr_mode(cpu: &Cpu, addr_mode: AddressingMode) -> String {
+    let pc = cpu.pc + 1;
+
+    let real_addr = {
+        let mut cloned_cpu = Cpu::new(cpu.bus.clone());
+        cloned_cpu.pc = pc;
+        cloned_cpu.get_op_addr(addr_mode)
+    };
+
+    let (got_addr, output) = match addr_mode {
+        AddressingMode::Immediate => {
+            let addr = cpu.bus.mem_read(pc);
+            (u16::from(addr), format!("#${addr:02X}"))
+        }
+        AddressingMode::ZeroPage => {
+            let addr = cpu.bus.mem_read(pc);
+            let val = cpu.bus.mem_read(u16::from(addr));
+            (u16::from(addr), format!("${addr:02X} = {val:02X}"))
+        }
+        AddressingMode::ZeroPageX => {
+            let addr = cpu.bus.mem_read(pc);
+            let with_x = addr.wrapping_add(cpu.reg_x);
+            let val = cpu.bus.mem_read(u16::from(with_x));
+            (
+                u16::from(with_x),
+                format!("(${addr:02X},X) @ {with_x:02X} = {val}"),
+            )
+        }
+        AddressingMode::IndirectX => {
+            let addr = cpu.bus.mem_read(pc);
+            let with_x = addr.wrapping_add(cpu.reg_x) % 256;
+        }
+        AddressingMode::Absolute => {
+            let addr = cpu.bus.mem_read_u16(pc);
+            (addr, format!("${addr:04X}"))
+        }
+        mode => todo!("{mode:#?}"),
+    };
+
+    assert_eq!(got_addr, real_addr);
+
+    output
+}
 #[must_use]
 pub fn trace_cpu(cpu: &Cpu) -> Option<String> {
     let opcode = OPCODES.get(&cpu.bus.mem_read(cpu.pc))?;
 
-    let bytes = (0..opcode.bytes as u16)
-        .map(|x| format!(" {:02X}", cpu.bus.mem_read(cpu.pc + x)))
-        .collect::<String>();
+    let bytes = (0..u16::from(opcode.bytes)).fold(String::new(), |mut output, b| {
+        let _ = write!(output, " {:02X}", cpu.bus.mem_read(cpu.pc + b));
+        output
+    });
 
-    Some(format!("{:04X} {}", cpu.pc, bytes))
+    Some(format!(
+        "{:04X} {:<8}  {} {:<27}  A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
+        cpu.pc,
+        bytes,
+        opcode.name.to_uppercase(),
+        trace_addr_mode(cpu, opcode.mode),
+        cpu.reg_a,
+        cpu.reg_x,
+        cpu.reg_y,
+        cpu.status.bits(),
+        cpu.sp
+    ))
 }

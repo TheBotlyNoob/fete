@@ -9,9 +9,7 @@ fn cpu_test() {
 
     let mut cpu = Cpu::new(bus);
 
-    cpu.pc = 0xC000;
-
-    cpu.run();
+    cpu.pc = 0xCFDB;
 
     println!("{}", trace_cpu(&cpu).unwrap());
 }
