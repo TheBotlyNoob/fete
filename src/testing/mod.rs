@@ -72,18 +72,22 @@ pub fn test_rom() -> Vec<u8> {
 }
 
 fn trace_addr_mode(cpu: &Cpu, addr_mode: AddressingMode) -> String {
+    if addr_mode == AddressingMode::NoneAddressing {
+        return String::new();
+    }
+
     let pc = cpu.pc + 1;
 
     let real_addr = {
-        let mut cloned_cpu = Cpu::new(cpu.bus.clone());
-        cloned_cpu.pc = pc;
-        cloned_cpu.get_op_addr(addr_mode)
+        let mut cloned = cpu.clone();
+        cloned.pc = pc;
+        cloned.get_op_addr(addr_mode)
     };
 
     let (got_addr, output) = match addr_mode {
         AddressingMode::Immediate => {
-            let addr = cpu.bus.mem_read(pc);
-            (u16::from(addr), format!("#${addr:02X}"))
+            let val = cpu.bus.mem_read(pc);
+            (pc, format!("#${val:02X}"))
         }
         AddressingMode::ZeroPage => {
             let addr = cpu.bus.mem_read(pc);
@@ -96,12 +100,18 @@ fn trace_addr_mode(cpu: &Cpu, addr_mode: AddressingMode) -> String {
             let val = cpu.bus.mem_read(u16::from(with_x));
             (
                 u16::from(with_x),
-                format!("(${addr:02X},X) @ {with_x:02X} = {val}"),
+                format!("${addr:02X},X @ {with_x:02X} = {val}"),
             )
         }
         AddressingMode::IndirectX => {
             let addr = cpu.bus.mem_read(pc);
-            let with_x = addr.wrapping_add(cpu.reg_x) % 256;
+            let with_x = addr.wrapping_add(cpu.reg_x);
+            let real_addr = cpu.bus.mem_read_u16(u16::from(with_x));
+            let val = cpu.bus.mem_read(real_addr);
+            (
+                real_addr,
+                format!("(${addr:02X},X) @ {with_x:02X} = {real_addr:04X} = {val:02X}"),
+            )
         }
         AddressingMode::Absolute => {
             let addr = cpu.bus.mem_read_u16(pc);
@@ -118,8 +128,8 @@ fn trace_addr_mode(cpu: &Cpu, addr_mode: AddressingMode) -> String {
 pub fn trace_cpu(cpu: &Cpu) -> Option<String> {
     let opcode = OPCODES.get(&cpu.bus.mem_read(cpu.pc))?;
 
-    let bytes = (0..u16::from(opcode.bytes)).fold(String::new(), |mut output, b| {
-        let _ = write!(output, " {:02X}", cpu.bus.mem_read(cpu.pc + b));
+    let bytes = (0..=opcode.mode.size()).fold(String::new(), |mut output, b| {
+        let _ = write!(output, " {:02X}", cpu.bus.mem_read(cpu.pc + u16::from(b)));
         output
     });
 

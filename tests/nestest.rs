@@ -9,7 +9,12 @@ fn cpu_test() {
 
     let mut cpu = Cpu::new(bus);
 
-    cpu.pc = 0xCFDB;
+    cpu.pc = 0xC000;
 
-    println!("{}", trace_cpu(&cpu).unwrap());
+    loop {
+        println!("{}", trace_cpu(&cpu).unwrap());
+        if cpu.tick().unwrap() {
+            break;
+        }
+    }
 }
