@@ -6,6 +6,6 @@
 
 tasks:
   - init: cargo build
-    command: cargo watch -x test
+    command: cargo watch -x 'xtask test'
 
 

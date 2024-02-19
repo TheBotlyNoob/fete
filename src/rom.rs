@@ -71,6 +71,9 @@ impl<'a> Rom<'a> {
             reader.read_bytes(512)?;
         }
 
+        log::debug!("PRG ROM size: {prg_rom_size:#X}");
+        log::debug!("CHR ROM size: {chr_rom_size:#X}");
+
         let prg_rom = reader.read_bytes(prg_rom_size)?.as_slice_less_safe();
         let chr_rom = reader.read_bytes(chr_rom_size)?.as_slice_less_safe();
 
@@ -102,8 +105,8 @@ mod test {
 
         let rom = Rom::new(&test_rom).unwrap();
 
-        // assert_eq!(rom.chr_rom, vec![2; CHR_ROM_PAGE_SIZE]);
-        // assert_eq!(rom.prg_rom, vec![1; 2 * PRG_ROM_PAGE_SIZE]);
+        assert_eq!(rom.prg_rom, vec![1; 2 * PRG_ROM_PAGE_SIZE]);
+        assert_eq!(rom.chr_rom, vec![2; CHR_ROM_PAGE_SIZE]);
         assert_eq!(rom.mapper, 3);
         assert_eq!(rom.mirroring, Mirroring::Vertical);
     }

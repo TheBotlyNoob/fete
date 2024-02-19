@@ -1,6 +1,6 @@
 # Fête
 
-A simple NES emulator written in Rust. The GUI is written with `winit` for a windowing system and `softbuffer` is used for rendering. Audio is handled by `rodio`.
+A simple, extensively tested, no_std NES emulator written in Rust. It uses the terminal for graphics.
 
 ## Why?
 

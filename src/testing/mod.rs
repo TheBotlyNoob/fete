@@ -1,6 +1,10 @@
 mod logger;
 
-use crate::rom::*;
+use crate::{
+    cpu::Cpu,
+    opcode::{OpCode, OPCODES},
+    rom::*,
+};
 
 #[used]
 #[doc(hidden)]
@@ -64,4 +68,15 @@ pub fn test_rom() -> Vec<u8> {
         pgp_rom: vec![0; 2 * PRG_ROM_PAGE_SIZE],
         chr_rom: vec![0; CHR_ROM_PAGE_SIZE],
     })
+}
+
+#[must_use]
+pub fn trace_cpu(cpu: &Cpu) -> Option<String> {
+    let opcode = OPCODES.get(&cpu.bus.mem_read(cpu.pc))?;
+
+    let bytes = (0..opcode.bytes as u16)
+        .map(|x| format!(" {:02X}", cpu.bus.mem_read(cpu.pc + x)))
+        .collect::<String>();
+
+    Some(format!("{:04X} {}", cpu.pc, bytes))
 }
