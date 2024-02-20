@@ -222,10 +222,10 @@ mod test {
         let bus = Bus::new(Rom::new(&rom).unwrap());
         let mut cpu = Cpu::new(bus);
         cpu.bus.mem_write(0x0000, 0x12);
-        cpu.bus.mem_write_u16(0x0012, 0xFF00);
+        cpu.bus.mem_write_u16(0x0012, 0x00FF);
         cpu.reg_x = 0x05;
 
-        assert_eq!(cpu.get_op_addr(AddressingMode::IndirectX), 0xFF00);
+        assert_eq!(cpu.get_op_addr(AddressingMode::IndirectX), 0x0005); // wraps around zero-page
         assert_eq!(cpu.pc, 0x0001);
     }
 

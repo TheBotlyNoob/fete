@@ -1,4 +1,9 @@
-use fete::{bus::Bus, cpu::Cpu, rom::Rom, testing::trace_cpu};
+use fete::{
+    bus::Bus,
+    cpu::{Cpu, Status},
+    rom::Rom,
+    testing::trace_cpu,
+};
 
 static NESTEST_ROM: &[u8] = include_bytes!("../tests/nestest/nestest.nes");
 
@@ -9,6 +14,7 @@ fn cpu_test() {
 
     let mut cpu = Cpu::new(bus);
 
+    cpu.status = Status::INTERRUPT_DISABLE | Status::UNUSED;
     cpu.pc = 0xC000;
 
     loop {
