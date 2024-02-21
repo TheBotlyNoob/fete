@@ -13,11 +13,11 @@ use crate::cpu::{AddressingMode, Cpu, Status};
 /// let mut cpu = Cpu::new(bus);
 ///
 /// // LDA #$05
-/// // AND #$05
+/// // AND #$03
 /// // BRK
 /// cpu.load_and_run(&[0xA9, 0x05, 0x29, 0x05, 0x00]).unwrap();
 ///
-/// assert_eq!(cpu.reg_a, 0x05);
+/// assert_eq!(cpu.reg_a, 0x01);
 /// ```
 pub fn and(cpu: &mut Cpu, mode: AddressingMode) {
     let addr = cpu.get_op_addr(mode);

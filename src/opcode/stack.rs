@@ -68,8 +68,8 @@ pub fn txs(cpu: &mut Cpu, _mode: AddressingMode) {
 /// // BRK
 /// cpu.load_and_run(&[0xA9, 0x05, 0x48, 0x00]).unwrap();
 ///
+/// assert_eq!(cpu.sp, Cpu::STACK_RESET + 1);
 /// assert_eq!(cpu.pop(), 0x05);
-/// assert_eq!(cpu.sp, Cpu::STACK_RESET);
 /// ```
 pub fn pha(cpu: &mut Cpu, _mode: AddressingMode) {
     cpu.push(cpu.reg_a);
@@ -129,7 +129,7 @@ pub fn pla(cpu: &mut Cpu, _mode: AddressingMode) {
 /// assert_eq!(cpu.sp, Cpu::STACK_RESET);
 /// ```
 pub fn php(cpu: &mut Cpu, _mode: AddressingMode) {
-    cpu.push((cpu.status | Status::BREAK | Status::UNUSED).bits());
+    cpu.push((cpu.status | Status::UNUSED).bits());
 }
 
 /// Pops the value on the stack into the status register.

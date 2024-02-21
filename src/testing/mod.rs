@@ -28,7 +28,7 @@ static INIT_LOGGER_STARTUP: unsafe extern "C" fn() -> usize = {
         link_section = ".text.startup"
     )]
     unsafe extern "C" fn init_logger_startup() -> usize {
-        // logger::init_with_env().unwrap();
+        logger::init_with_env().unwrap();
         0
     }
     init_logger_startup
@@ -143,7 +143,7 @@ pub fn trace_cpu(cpu: &Cpu) -> Option<String> {
     });
 
     Some(format!(
-        "{:04X} {:<10} {} {:<27}  A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
+        "{:04X} {:<10} {} {:<27} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
         cpu.pc,
         bytes,
         opcode.name.to_uppercase(),
