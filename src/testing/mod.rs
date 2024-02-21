@@ -28,7 +28,7 @@ static INIT_LOGGER_STARTUP: unsafe extern "C" fn() -> usize = {
         link_section = ".text.startup"
     )]
     unsafe extern "C" fn init_logger_startup() -> usize {
-        logger::init_with_env().unwrap();
+        // logger::init_with_env().unwrap();
         0
     }
     init_logger_startup
@@ -113,6 +113,11 @@ fn trace_addr_mode(cpu: &Cpu, addr_mode: AddressingMode) -> String {
                 format!("(${addr:02X},X) @ {with_x:02X} = {real_addr:04X} = {val:02X}"),
             )
         }
+        AddressingMode::Relative => {
+            let addend = cpu.bus.mem_read(pc) + 1;
+            let addr = pc + u16::from(addend);
+            (addr, format!("${addr:02X}"))
+        }
         AddressingMode::Absolute => {
             let addr = cpu.bus.mem_read_u16(pc);
             (addr, format!("${addr:04X}"))
@@ -126,7 +131,11 @@ fn trace_addr_mode(cpu: &Cpu, addr_mode: AddressingMode) -> String {
 }
 #[must_use]
 pub fn trace_cpu(cpu: &Cpu) -> Option<String> {
-    let opcode = OPCODES.get(&cpu.bus.mem_read(cpu.pc))?;
+    let opcode = cpu.bus.mem_read(cpu.pc);
+    let Some(opcode) = OPCODES.get(&opcode) else {
+        log::error!("OPCODE NOT FOUND: {opcode:#02X}");
+        return None;
+    };
 
     let bytes = (0..=opcode.mode.size()).fold(String::new(), |mut output, b| {
         let _ = write!(output, " {:02X}", cpu.bus.mem_read(cpu.pc + u16::from(b)));
@@ -134,7 +143,7 @@ pub fn trace_cpu(cpu: &Cpu) -> Option<String> {
     });
 
     Some(format!(
-        "{:04X} {:<8}  {} {:<27}  A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
+        "{:04X} {:<10} {} {:<27}  A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
         cpu.pc,
         bytes,
         opcode.name.to_uppercase(),
