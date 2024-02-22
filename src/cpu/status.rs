@@ -37,6 +37,7 @@ bitflags! {
 
 impl Default for Status {
     fn default() -> Self {
-        Self::INTERRUPT_DISABLE | Self::UNUSED
+        // Self::INTERRUPT_DISABLE | Self::UNUSED
+        Self::empty()
     }
 }

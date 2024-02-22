@@ -15,7 +15,7 @@ use crate::cpu::{AddressingMode, Cpu, Status};
 /// // LDA #$05
 /// // AND #$03
 /// // BRK
-/// cpu.load_and_run(&[0xA9, 0x05, 0x29, 0x05, 0x00]).unwrap();
+/// cpu.load_and_run(&[0xA9, 0x05, 0x29, 0x03, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.reg_a, 0x01);
 /// ```

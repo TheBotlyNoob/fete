@@ -123,7 +123,6 @@ impl<'rom> Cpu<'rom> {
     /// The program is truncated to `u16::MAX`.
     pub fn load(&mut self, prog: &[u8]) {
         for (i, &b) in prog.iter().enumerate().take(usize::from(u16::MAX)) {
-            log::info!("addr: {:#X?}: {b:#X?}", 0x0600 + i);
             #[allow(clippy::cast_possible_truncation)] // already truncated to u16::MAX
             self.bus.mem_write(0x0600 + i as u16, b);
         }
@@ -205,13 +204,6 @@ impl<'rom> Cpu<'rom> {
         let opcode_info = crate::opcode::OPCODES.get(&opcode);
 
         if let Some(opcode) = opcode_info {
-            log::info!(
-                "{:#02X} {:#X} ({}) ({:#?})",
-                self.pc - 1,
-                opcode.code,
-                opcode.name,
-                opcode.mode
-            );
             (opcode.op)(self, opcode.mode);
         } else {
             return Err(Error::InvalidOpcode {

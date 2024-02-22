@@ -109,7 +109,7 @@ fn cpu_test() {
         // TODO: CPU cycles.
 
         let trace = trace_cpu(&cpu).unwrap();
-        eprintln!("{trace}");
+        println!("{trace}");
         assert_eq!(trace, line);
         if cpu.tick().unwrap() {
             break;

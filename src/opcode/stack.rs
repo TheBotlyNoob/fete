@@ -68,7 +68,7 @@ pub fn txs(cpu: &mut Cpu, _mode: AddressingMode) {
 /// // BRK
 /// cpu.load_and_run(&[0xA9, 0x05, 0x48, 0x00]).unwrap();
 ///
-/// assert_eq!(cpu.sp, Cpu::STACK_RESET + 1);
+/// assert_eq!(cpu.sp, Cpu::STACK_RESET - 1);
 /// assert_eq!(cpu.pop(), 0x05);
 /// ```
 pub fn pha(cpu: &mut Cpu, _mode: AddressingMode) {
@@ -124,12 +124,12 @@ pub fn pla(cpu: &mut Cpu, _mode: AddressingMode) {
 ///
 /// assert_eq!(
 ///     Status::from_bits_truncate(cpu.pop()),
-///     Status::INTERRUPT_DISABLE | Status::BREAK | Status::UNUSED
+///     Status::INTERRUPT_DISABLE | Status::UNUSED
 /// );
 /// assert_eq!(cpu.sp, Cpu::STACK_RESET);
 /// ```
 pub fn php(cpu: &mut Cpu, _mode: AddressingMode) {
-    cpu.push((cpu.status | Status::UNUSED).bits());
+    cpu.push((cpu.status | Status::BREAK | Status::UNUSED).bits());
 }
 
 /// Pops the value on the stack into the status register.
@@ -159,5 +159,5 @@ pub fn php(cpu: &mut Cpu, _mode: AddressingMode) {
 /// ```
 pub fn plp(cpu: &mut Cpu, _mode: AddressingMode) {
     let val = cpu.pop();
-    cpu.status = Status::from_bits_truncate(val);
+    cpu.status = Status::from_bits_truncate(val & !Status::BREAK.bits());
 }
