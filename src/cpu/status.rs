@@ -27,7 +27,7 @@ bitflags! {
         /// Break flag.
         const BREAK             = 0b0001_0000;
         /// Unused flag.
-        const UNUSED            = 0b0010_0000;
+        const BREAK2            = 0b0010_0000;
         /// Overflow flag.
         const OVERFLOW          = 0b0100_0000;
         /// Negative flag.

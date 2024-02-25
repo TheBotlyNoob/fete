@@ -105,7 +105,7 @@ pub fn pla(cpu: &mut Cpu, _mode: AddressingMode) {
 }
 
 /// Pushes the value in the status register onto the stack.
-/// The [`Status::BREAK`] and [`Status::UNUSED`] flags will be added to the status on the stack.
+/// The [`Status::BREAK`] and [`Status::BREAK2`] flags will be added to the status on the stack.
 ///
 /// # Examples
 /// ```
@@ -124,12 +124,12 @@ pub fn pla(cpu: &mut Cpu, _mode: AddressingMode) {
 ///
 /// assert_eq!(
 ///     Status::from_bits_truncate(cpu.pop()),
-///     Status::INTERRUPT_DISABLE | Status::UNUSED
+///     Status::INTERRUPT_DISABLE | Status::BREAK2
 /// );
 /// assert_eq!(cpu.sp, Cpu::STACK_RESET);
 /// ```
 pub fn php(cpu: &mut Cpu, _mode: AddressingMode) {
-    cpu.push((cpu.status | Status::BREAK | Status::UNUSED).bits());
+    cpu.push((cpu.status | Status::BREAK | Status::BREAK2).bits());
 }
 
 /// Pops the value on the stack into the status register.
@@ -153,11 +153,11 @@ pub fn php(cpu: &mut Cpu, _mode: AddressingMode) {
 ///
 /// assert_eq!(
 ///     cpu.status,
-///     Status::INTERRUPT_DISABLE | Status::BREAK | Status::UNUSED
+///     Status::INTERRUPT_DISABLE | Status::BREAK | Status::BREAK2
 /// );
 /// assert_eq!(cpu.sp, Cpu::STACK_RESET);
 /// ```
 pub fn plp(cpu: &mut Cpu, _mode: AddressingMode) {
     let val = cpu.pop();
-    cpu.status = Status::from_bits_truncate(val & !Status::BREAK.bits());
+    cpu.status = (Status::from_bits_truncate(val) | Status::BREAK2) & !Status::BREAK;
 }

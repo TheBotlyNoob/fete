@@ -1,5 +1,23 @@
 use crate::cpu::{AddressingMode, Cpu, Status};
 
+fn op_with_carry(cpu: &mut Cpu, mode: AddressingMode, add: bool) {
+    let addr = cpu.get_op_addr(mode);
+    let val = cpu.bus.mem_read(addr);
+    let val = if add { val } else { 255 - val }; // subtraction is EXACTLY THE SAME, but val is one's compliment
+
+    let orig_a = cpu.reg_a;
+
+    let (init, first_carry) = cpu.reg_a.overflowing_add(val);
+    let (out, second_carry) = init.overflowing_add(u8::from(cpu.status.contains(Status::CARRY)));
+    cpu.set_reg_a(out);
+
+    cpu.status.set(Status::CARRY, first_carry || second_carry);
+    cpu.status.set(
+        Status::OVERFLOW,
+        (!(val ^ orig_a) & (val ^ out)) & (1 << 7) != 0,
+    );
+}
+
 /// Adds a value in memory to the accumulator, and sets the zero, negative, carry, and overflow flags.
 ///
 /// # Examples
@@ -23,19 +41,7 @@ use crate::cpu::{AddressingMode, Cpu, Status};
 /// assert_eq!(cpu.status, Status::BREAK);
 /// ```
 pub fn adc(cpu: &mut Cpu, mode: AddressingMode) {
-    let addr = cpu.get_op_addr(mode);
-    let val = cpu.bus.mem_read(addr);
-
-    let (init_add, first_carry) = cpu.reg_a.overflowing_add(val);
-    let (sum, second_carry) =
-        init_add.overflowing_add(u8::from(cpu.status.contains(Status::CARRY)));
-    cpu.set_reg_a(sum);
-
-    cpu.status.set(Status::CARRY, first_carry || second_carry);
-    cpu.status.set(
-        Status::OVERFLOW,
-        (val ^ cpu.reg_a) & (val ^ sum) & (1 << 7) != 0,
-    );
+    op_with_carry(cpu, mode, true)
 }
 
 /// Subtracts a value in memory to the accumulator, and sets the zero, negative, carry, and overflow flags.
@@ -62,19 +68,7 @@ pub fn adc(cpu: &mut Cpu, mode: AddressingMode) {
 /// );
 /// ```
 pub fn sbc(cpu: &mut Cpu, mode: AddressingMode) {
-    let addr = cpu.get_op_addr(mode);
-    let val = cpu.bus.mem_read(addr);
-
-    let (init_add, first_carry) = cpu.reg_a.overflowing_sub(val);
-    let (diff, second_carry) =
-        init_add.overflowing_sub(u8::from(!cpu.status.contains(Status::CARRY)));
-    cpu.set_reg_a(diff);
-
-    cpu.status.set(Status::CARRY, first_carry || second_carry);
-    cpu.status.set(
-        Status::OVERFLOW,
-        (val ^ cpu.reg_a) & (val ^ diff) & (1 << 7) != 0,
-    );
+    op_with_carry(cpu, mode, false)
 }
 
 /// Compares the value in the accumulator with a value in memory, and sets the zero, negative, and carry flags.

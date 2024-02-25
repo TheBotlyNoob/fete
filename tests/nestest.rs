@@ -102,7 +102,7 @@ fn cpu_test() {
 
     let mut cpu = Cpu::new(bus);
 
-    cpu.status = Status::INTERRUPT_DISABLE | Status::UNUSED;
+    cpu.status = Status::INTERRUPT_DISABLE | Status::BREAK2;
     cpu.pc = 0xC000;
 
     for line in NESTICLE_LOG.lines().map(|l| l.split_at(73).0) {
