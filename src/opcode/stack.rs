@@ -124,7 +124,7 @@ pub fn pla(cpu: &mut Cpu, _mode: AddressingMode) {
 ///
 /// assert_eq!(
 ///     Status::from_bits_truncate(cpu.pop()),
-///     Status::INTERRUPT_DISABLE | Status::BREAK2
+///     Status::INTERRUPT_DISABLE | Status::BREAK | Status::BREAK2
 /// );
 /// assert_eq!(cpu.sp, Cpu::STACK_RESET);
 /// ```

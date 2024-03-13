@@ -41,7 +41,7 @@ fn op_with_carry(cpu: &mut Cpu, mode: AddressingMode, add: bool) {
 /// assert_eq!(cpu.status, Status::BREAK);
 /// ```
 pub fn adc(cpu: &mut Cpu, mode: AddressingMode) {
-    op_with_carry(cpu, mode, true)
+    op_with_carry(cpu, mode, true);
 }
 
 /// Subtracts a value in memory to the accumulator, and sets the zero, negative, carry, and overflow flags.
@@ -62,13 +62,10 @@ pub fn adc(cpu: &mut Cpu, mode: AddressingMode) {
 /// cpu.load_and_run(&[0xA9, 0x05, 0xE9, 0x05, 0x00]).unwrap();
 ///
 /// assert_eq!(cpu.reg_a, 0xFF);
-/// assert_eq!(
-///     cpu.status,
-///     Status::CARRY | Status::NEGATIVE | Status::OVERFLOW | Status::BREAK
-/// );
+/// assert_eq!(cpu.status, Status::NEGATIVE | Status::BREAK);
 /// ```
 pub fn sbc(cpu: &mut Cpu, mode: AddressingMode) {
-    op_with_carry(cpu, mode, false)
+    op_with_carry(cpu, mode, false);
 }
 
 /// Compares the value in the accumulator with a value in memory, and sets the zero, negative, and carry flags.
