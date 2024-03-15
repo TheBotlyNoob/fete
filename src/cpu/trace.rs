@@ -7,100 +7,100 @@ use crate::{
 };
 use core::fmt::{Display, Write};
 
+// matches the log format of NESticle
+
 pub struct TraceAddrMode<'cpu> {
     cpu: &'cpu Cpu<'cpu>,
     op: &'cpu OpCode,
 }
 impl<'a> Display for TraceAddrMode<'a> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let addr_mode = self.op.mode;
-        if addr_mode == AddressingMode::NoneAddressing {
-            return Ok(());
-        }
-
-        let pc = self.cpu.pc + 1;
-
-        let real_addr = {
-            let mut cloned = self.cpu.clone();
-            cloned.pc = pc;
-            cloned.get_op_addr(addr_mode)
-        };
-
         // size outputted- used for padding later
         let mut out_size = 0_usize;
 
-        let got_addr = match addr_mode {
-            AddressingMode::Immediate => {
-                let val = self.cpu.bus.mem_read(pc);
+        let addr_mode = self.op.mode;
+        if addr_mode != AddressingMode::NoneAddressing {
+            let pc = self.cpu.pc + 1;
 
-                write!(f, "#${val:02X}")?;
-                out_size += "#xx".len();
+            let real_addr = {
+                let mut cloned = self.cpu.clone();
+                cloned.pc = pc;
+                cloned.get_op_addr(addr_mode)
+            };
 
-                pc
-            }
-            AddressingMode::ZeroPage => {
-                let addr = self.cpu.bus.mem_read(pc);
-                let val = self.cpu.bus.mem_read(u16::from(addr));
+            let got_addr = match addr_mode {
+                AddressingMode::Immediate => {
+                    let val = self.cpu.bus.mem_read(pc);
 
-                write!(f, "${addr:02X} = {val:02X}")?;
-                out_size += "#xx = xx".len();
+                    write!(f, "#${val:02X}")?;
+                    out_size += "#$xx".len();
 
-                u16::from(addr)
-            }
-            AddressingMode::ZeroPageX => {
-                let addr = self.cpu.bus.mem_read(pc);
-                let with_x = addr.wrapping_add(self.cpu.reg_x);
-                let val = self.cpu.bus.mem_read(u16::from(with_x));
+                    pc
+                }
+                AddressingMode::ZeroPage => {
+                    let addr = self.cpu.bus.mem_read(pc);
+                    let val = self.cpu.bus.mem_read(u16::from(addr));
 
-                write!(f, "${addr:02X},X @ {with_x:02X} = {val:02X}")?;
-                out_size += "$xx,X @ xx = xx".len();
+                    write!(f, "${addr:02X} = {val:02X}")?;
+                    out_size += "#xx = xx".len();
 
-                u16::from(with_x)
-            }
-            AddressingMode::IndirectX => {
-                let addr = self.cpu.bus.mem_read(pc);
-                let with_x = addr.wrapping_add(self.cpu.reg_x);
-                let real_addr = self.cpu.bus.mem_read_u16(u16::from(with_x));
-                let val = self.cpu.bus.mem_read(real_addr);
+                    u16::from(addr)
+                }
+                AddressingMode::ZeroPageX => {
+                    let addr = self.cpu.bus.mem_read(pc);
+                    let with_x = addr.wrapping_add(self.cpu.reg_x);
+                    let val = self.cpu.bus.mem_read(u16::from(with_x));
 
-                write!(
-                    f,
-                    "(${addr:02X},X) @ {with_x:02X} = {real_addr:04X} = {val:02X}"
-                )?;
-                out_size += "($xx,X) @ xx = xxxx = xx".len();
+                    write!(f, "${addr:02X},X @ {with_x:02X} = {val:02X}")?;
+                    out_size += "$xx,X @ xx = xx".len();
 
-                real_addr
-            }
-            AddressingMode::Relative => {
-                let addend = self.cpu.bus.mem_read(pc) + 1;
-                let addr = pc + u16::from(addend);
+                    u16::from(with_x)
+                }
+                AddressingMode::IndirectX => {
+                    let addr = self.cpu.bus.mem_read(pc);
+                    let with_x = addr.wrapping_add(self.cpu.reg_x);
+                    let real_addr = self.cpu.bus.mem_read_u16(u16::from(with_x));
+                    let val = self.cpu.bus.mem_read(real_addr);
 
-                write!(f, "${addr:02X}")?;
-                out_size += "$xx".len();
+                    write!(
+                        f,
+                        "(${addr:02X},X) @ {with_x:02X} = {real_addr:04X} = {val:02X}"
+                    )?;
+                    out_size += "($xx,X) @ xx = xxxx = xx".len();
 
-                addr
-            }
-            AddressingMode::Absolute => {
-                let addr = self.cpu.bus.mem_read_u16(pc);
-                if self.op.code == 0x4C || self.op.code == 0x20
-                /* JMP & JSR absolute */
-                {
+                    real_addr
+                }
+                AddressingMode::Relative => {
+                    let addend = self.cpu.bus.mem_read(pc) + 1;
+                    let addr = pc + u16::from(addend);
+
                     write!(f, "${addr:04X}")?;
                     out_size += "$xxxx".len();
-                } else {
-                    let val = self.cpu.bus.mem_read(addr);
-                    write!(f, "${addr:04X} = {val:02X}")?;
-                    out_size += "$xxxx = xx".len();
+
+                    addr
                 }
-                addr
-            }
-            mode => todo!("{mode:#?}"),
-        };
+                AddressingMode::Absolute => {
+                    let addr = self.cpu.bus.mem_read_u16(pc);
+                    if self.op.code == 0x4C || self.op.code == 0x20
+                    /* JMP & JSR absolute */
+                    {
+                        write!(f, "${addr:04X}")?;
+                        out_size += "$xxxx".len();
+                    } else {
+                        let val = self.cpu.bus.mem_read(addr);
+                        write!(f, "${addr:04X} = {val:02X}")?;
+                        out_size += "$xxxx = xx".len();
+                    }
+                    addr
+                }
+                mode => todo!("{mode:#?}"),
+            };
 
-        assert_eq!(got_addr, real_addr);
+            assert_eq!(got_addr, real_addr);
+        }
 
-        for _ in out_size..=f.width().unwrap_or(0) {
-            f.write_char(' ');
+        for _ in 0..(f.width().unwrap_or(0).saturating_sub(out_size)) {
+            f.write_char(' ')?;
         }
 
         Ok(())
@@ -150,12 +150,20 @@ struct TraceBytes<'cpu> {
 }
 impl<'a> Display for TraceBytes<'a> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        for i in 0..=self.op.mode.size() {
+        let op_size = self.op.mode.size() + 1;
+        for i in 0..op_size {
             write!(
                 f,
                 " {:02X}",
                 self.cpu.bus.mem_read(self.cpu.pc + u16::from(i))
             )?;
+        }
+        for _ in 0..(f
+            .width()
+            .unwrap_or(0)
+            .saturating_sub(usize::from(op_size * 3)))
+        {
+            f.write_char(' ')?;
         }
         Ok(())
     }

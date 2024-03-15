@@ -23,7 +23,6 @@ fn cpu_test() {
 
         let trace = TraceOp::new(&cpu).unwrap().to_string();
 
-        println!("{trace}");
         assert_eq!(trace, line);
         if cpu.tick().unwrap() {
             break;
