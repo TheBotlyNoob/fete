@@ -40,15 +40,16 @@ pub fn jmp(cpu: &mut Cpu, mode: AddressingMode) {
 /// # let bus = Bus::new(Rom::new(&rom).unwrap());
 /// let mut cpu = Cpu::new(bus);
 ///
-/// // JSR $C000
+/// // JSR $0602
 /// // BRK
 /// // LDA #$05
 /// // BRK
-/// cpu.load_and_run(&[0xA9, 0x05, 0x20, 0x00, 0xC0, 0x00])
+/// cpu.load_and_run(&[0x20, 0x02, 0x06, 0x00, 0xA9, 0x05, 0x00])
 ///     .unwrap();
 ///
 /// assert_eq!(cpu.reg_a, 0x05);
-/// assert_eq!(cpu.pc, 0xC002);
+/// assert_eq!(cpu.pc, 0x0608);
+/// assert_eq!(cpu.pop_u16(), 0x0603);
 /// assert_eq!(cpu.status, Status::BREAK);
 /// ```
 pub fn jsr(cpu: &mut Cpu, mode: AddressingMode) {

@@ -4,8 +4,12 @@ use snafu::prelude::*;
 pub mod status;
 pub use status::Status;
 
+pub mod trace;
+
 pub mod addr_mode;
 pub use addr_mode::AddressingMode;
+
+use self::trace::TraceOp;
 
 #[derive(Snafu)]
 pub enum Error {
@@ -114,7 +118,9 @@ impl<'rom> Cpu<'rom> {
                 unreachable!("AddressingMode::NoneAddressing is not a valid addressing mode");
             }
         };
+
         debug_assert_eq!(prev_pc + u16::from(mode.size()), self.pc);
+
         addr
     }
 
@@ -201,9 +207,18 @@ impl<'rom> Cpu<'rom> {
     /// Returns an [`Error::InvalidOpcode`] if an invalid opcode is encountered.
     pub fn tick(&mut self) -> Result<bool, Error> {
         let opcode = self.take();
-        let opcode_info = crate::opcode::OPCODES.get(&opcode);
+        let opcode_info: Option<&crate::opcode::OpCode> = crate::opcode::OPCODES.get(&opcode);
 
         if let Some(opcode) = opcode_info {
+            #[cfg(any(test, fete_doctest))]
+            log::trace!(
+                "{}",
+                TraceOp {
+                    cpu: self,
+                    op: opcode
+                }
+            );
+
             (opcode.op)(self, opcode.mode);
         } else {
             return Err(Error::InvalidOpcode {

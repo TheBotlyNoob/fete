@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 bitflags = "2.4.1"
 log = "0.4.20"
-no-panic = "0.1.27"
 phf = { version = "0.11.2", default-features = false, features = ["macros"] }
 replace_with = { version = "0.1.7", default-features = false }
 snafu = { version = "0.8.0", default-features = false }

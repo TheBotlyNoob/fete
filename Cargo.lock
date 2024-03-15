@@ -113,7 +113,6 @@ version = "0.1.0"
 dependencies = [
  "bitflags",
  "log",
- "no-panic",
  "phf",
  "pretty_assertions",
  "replace_with",
@@ -138,17 +137,6 @@ name = "log"
 version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
-
-[[package]]
-name = "no-panic"
-version = "0.1.29"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c711522eedec2a96bb3672ad60a03561cb28934ab1e9b97d2ecb58e07c79ef52"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
 
 [[package]]
 name = "once_cell"
