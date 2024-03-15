@@ -8,5 +8,6 @@ pub mod cpu;
 pub mod opcode;
 pub mod rom;
 
+mod ppu;
 #[cfg(any(test, fete_doctest))]
 pub mod testing;

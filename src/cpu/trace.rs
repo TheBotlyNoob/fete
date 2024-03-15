@@ -26,11 +26,15 @@ impl<'a> Display for TraceAddrMode<'a> {
             cloned.get_op_addr(addr_mode)
         };
 
+        // size outputted- used for padding later
+        let mut out_size = 0_usize;
+
         let got_addr = match addr_mode {
             AddressingMode::Immediate => {
                 let val = self.cpu.bus.mem_read(pc);
 
                 write!(f, "#${val:02X}")?;
+                out_size += "#xx".len();
 
                 pc
             }
@@ -39,6 +43,7 @@ impl<'a> Display for TraceAddrMode<'a> {
                 let val = self.cpu.bus.mem_read(u16::from(addr));
 
                 write!(f, "${addr:02X} = {val:02X}")?;
+                out_size += "#xx = xx".len();
 
                 u16::from(addr)
             }
@@ -47,7 +52,8 @@ impl<'a> Display for TraceAddrMode<'a> {
                 let with_x = addr.wrapping_add(self.cpu.reg_x);
                 let val = self.cpu.bus.mem_read(u16::from(with_x));
 
-                write!(f, "${addr:02X},X @ {with_x:02X} = {val}")?;
+                write!(f, "${addr:02X},X @ {with_x:02X} = {val:02X}")?;
+                out_size += "$xx,X @ xx = xx".len();
 
                 u16::from(with_x)
             }
@@ -61,6 +67,7 @@ impl<'a> Display for TraceAddrMode<'a> {
                     f,
                     "(${addr:02X},X) @ {with_x:02X} = {real_addr:04X} = {val:02X}"
                 )?;
+                out_size += "($xx,X) @ xx = xxxx = xx".len();
 
                 real_addr
             }
@@ -69,6 +76,7 @@ impl<'a> Display for TraceAddrMode<'a> {
                 let addr = pc + u16::from(addend);
 
                 write!(f, "${addr:02X}")?;
+                out_size += "$xx".len();
 
                 addr
             }
@@ -78,9 +86,11 @@ impl<'a> Display for TraceAddrMode<'a> {
                 /* JMP & JSR absolute */
                 {
                     write!(f, "${addr:04X}")?;
+                    out_size += "$xxxx".len();
                 } else {
                     let val = self.cpu.bus.mem_read(addr);
                     write!(f, "${addr:04X} = {val:02X}")?;
+                    out_size += "$xxxx = xx".len();
                 }
                 addr
             }
@@ -88,6 +98,10 @@ impl<'a> Display for TraceAddrMode<'a> {
         };
 
         assert_eq!(got_addr, real_addr);
+
+        for _ in out_size..=f.width().unwrap_or(0) {
+            f.write_char(' ');
+        }
 
         Ok(())
     }
@@ -110,7 +124,7 @@ impl<'a> Display for TraceOp<'a> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(
             f,
-            "{:04X} {:<10} {} {:<27} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
+            "{:04X} {:10} {} {:27} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
             self.cpu.pc,
             TraceBytes {
                 cpu: self.cpu,
